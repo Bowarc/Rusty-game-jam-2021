@@ -1,11 +1,16 @@
 #![allow(unused)]
-use bevy::prelude::{App, Command};
-use bevy_retrograde::prelude::RetroPlugins;
+use bevy::prelude::{App, AssetServer, Commands, DefaultPlugins, IntoSystem, Res};
+// use bevy::{prelude::*, sprite::collide_aabb::collide};
+// use bevy_retrograde::prelude::RetroPlugins;
+
+mod item;
+mod player;
 fn main() {
-    App.build()
-        .add_plugins(RetroPlugins)
+    App::build()
+        .add_plugins(DefaultPlugins)
+        // .add_plugins(player::PlayerPlugin)
         .add_startup_system(setup.system())
         .run();
 }
 
-fn setup(mut commands: Command, asset_server: Res<AssetServer>) {}
+fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {}
