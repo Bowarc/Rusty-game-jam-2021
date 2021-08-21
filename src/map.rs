@@ -5,5 +5,5 @@ pub struct map_manager {
 
 impl map_manager {
     pub fn new() -> Self {}
-    pub fn load_map() -> Self {}
+    pub fn load_map(&mut self) {}
 }
