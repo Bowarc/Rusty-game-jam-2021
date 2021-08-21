@@ -1,0 +1,18 @@
+Theme{
+            Illusion of security
+}
+
+Game idea{
+    Cave explorer with shadows and lights.
+
+    Procedurally generated ?
+
+    We should add Ferris. Maybe as an ester egg
+
+    crafting(weapons an other type of things), (Inventory and stuff upgrades)
+
+    You will find less and less crafted stuff as you go down. But you can find better ore
+
+    Maybe add an other type of dificulty
+    enemies, less vision(that you could upgrade with torchs)
+}
