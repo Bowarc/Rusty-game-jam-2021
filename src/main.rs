@@ -71,7 +71,7 @@ fn setup(
     // Load the assets
     let red_radish = asset_server.load("redRadishSheet.png"); // We should use our own sprite sheet
 
-    // TODO: Load the map
+    // TODO: Load the map    	  NOT FINISHED
     let tilemap = Tilemap::builder()
         .dimensions(TILEMAP_WIDTH as u32, TILEMAP_HEIGHT as u32)
         // .chunk_dimensions(CHUNK_WIDTH, CHUNK_HEIGHT, 1)
@@ -99,7 +99,6 @@ fn setup(
         global_transform: Default::default(),
     };
     commands.spawn().insert_bundle(tilemap_components);
-    // .insert(Timer::from_seconds(0.075, true));
 
     // Spawn the player and assign sprite
     commands
