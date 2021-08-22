@@ -31,7 +31,7 @@ fn main() {
         .add_plugins(DefaultPlugins)
         .add_plugin(MapPlugin)
         .add_plugin(PlayerPlugin)
-        .add_startup_system(setup1.system())
+        .add_startup_system(load_tiles.system())
         .add_startup_system(setup.system())
         .run();
 }
@@ -44,8 +44,7 @@ fn exit_system(mut exit: EventWriter<AppExit>, keyboard_input: Res<Input<KeyCode
     }
 }
 
-fn setup1(mut tile_sprite_handles: ResMut<TileSpriteHandles>, asset_server: Res<AssetServer>) {
-    println!("saluty");
+fn load_tiles(mut tile_sprite_handles: ResMut<TileSpriteHandles>, asset_server: Res<AssetServer>) {
     tile_sprite_handles.handles = asset_server.load_folder("textures").unwrap();
 }
 
@@ -56,7 +55,6 @@ fn setup(
     mut textures: ResMut<Assets<Texture>>,
     mut texture_atlases: ResMut<Assets<TextureAtlas>>,
 ) {
-    println!("working");
     // spawn the camera
     commands.spawn_bundle(OrthographicCameraBundle::new_2d());
 
