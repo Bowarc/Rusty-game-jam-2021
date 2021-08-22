@@ -3,9 +3,9 @@
 // }
 
 pub enum Item {
-    Sword(sword),
+    Sword,
 }
 
-pub struct sword {
+pub struct Sword {
     attack_speed: i32, // delay between attacks (in millis)
 }

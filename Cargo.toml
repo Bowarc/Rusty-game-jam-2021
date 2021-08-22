@@ -1,12 +1,15 @@
 [package]
 name = "rusty_jam_2021"
 version = "0.1.0"
-authors = ["Bowarc <yuyeaaaahhhh@laposte.net>"]
+authors = [
+	"Bowarc <yuyeaaaahhhh@laposte.net>",
+	"Eragon <eragon@eragon.re>"
+]
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-bevy = "0.5"
-# bevy_retrograde = "0.2.0"
+bevy = { version = "0.5", default-features=false }
+bevy_retrograde = "0.2"
 rand = "0.8"
