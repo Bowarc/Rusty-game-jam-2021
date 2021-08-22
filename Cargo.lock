@@ -3222,6 +3222,7 @@ dependencies = [
  "bevy_tilemap",
  "noise",
  "rand 0.8.4",
+ "serde_json",
 ]
 
 [[package]]
