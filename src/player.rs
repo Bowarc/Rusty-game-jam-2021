@@ -45,7 +45,6 @@ fn player_movement(
         let mut direction = Vec3::new(0., 0., 0.);
 
         if keyboard_input.pressed(KeyCode::Left) {
-            // direction += Vec3::new(-SPEED, 0., 0.);
             direction += Vec3::new(-1., 0., 0.);
 
             let frames = [12, 13, 14, 15];
@@ -61,7 +60,6 @@ fn player_movement(
         }
 
         if keyboard_input.pressed(KeyCode::Right) {
-            // direction += Vec3::new(SPEED, 0., 0.);
             direction += Vec3::new(1., 0., 0.);
             let frames = [4, 5, 6, 7];
             if *frame % 10 == 0 {
@@ -76,7 +74,6 @@ fn player_movement(
         }
 
         if keyboard_input.pressed(KeyCode::Up) {
-            // direction += Vec3::new(0., -SPEED, 0.);
             direction += Vec3::new(0., -1., 0.);
             let frames = [8, 9, 10, 11];
             if *frame % 10 == 0 {
@@ -91,7 +88,6 @@ fn player_movement(
         }
 
         if keyboard_input.pressed(KeyCode::Down) {
-            // direction += Vec3::new(0., SPEED, 0.);
             direction += Vec3::new(0., 1., 0.);
             let frames = [0, 1, 2, 3];
             if *frame % 10 == 0 {
@@ -105,7 +101,6 @@ fn player_movement(
             }
         }
         let normalized_direction = direction.normalize_or_zero();
-        // *velocity = Velocity::from_linear(direction);
         *velocity = Velocity::from_linear(normalized_direction * SPEED);
     }
 }
