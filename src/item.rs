@@ -1,5 +1,5 @@
 pub enum Items {
-    Sword,
+	Sword,
 }
 
 pub enum Armors {
@@ -16,7 +16,7 @@ pub struct Item{
 
 pub struct Sword {
 	item: Item,
-    attack_speed: i32, // delay between attacks (in millis)
+	attack_speed: i32, // delay between attacks (in millis)
 }
 
 pub struct ArmorPiece {
