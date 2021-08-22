@@ -7,10 +7,7 @@ use bevy::{
     },
 };
 
-// use bevy_ecs::system::into_system::IntoSystem;
-
 use bevy_tilemap::{chunk::LayerKind, prelude::TilemapBundle, Tilemap, TilemapLayer};
-// use bevy_retrograde::prelude::Visible;
 
 use bevy_retrograde::{
     prelude::{
