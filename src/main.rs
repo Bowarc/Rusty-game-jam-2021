@@ -8,7 +8,7 @@ mod player;
 fn main() {
     App::build()
         .add_plugins(DefaultPlugins)
-        // .add_plugins(player::PlayerPlugin)
+        .add_plugin(player::PlayerPlugin)
         .add_startup_system(setup.system())
         .run();
 }
