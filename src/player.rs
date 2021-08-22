@@ -30,6 +30,51 @@ impl Plugin for PlayerPlugin {
     }
 }
 
+fn setup(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    mut sprite_sheet_assets: ResMut<Assets<SpriteSheet>>,
+) {
+	// We should use our own sprite sheet
+	let red_radish = asset_server.load("redRadishSheet.png");
+
+	// Spawn the player, assign the sprite and define the colision bound box
+    commands
+        .spawn_bundle(SpriteSheetBundle {
+            sprite_bundle: SpriteBundle {
+                image: red_radish.clone(),
+                sprite: Sprite {
+                    pixel_perfect: false,
+                    ..Default::default()
+                },
+                transform: Transform::from_xyz(0., -50., 0.),
+                ..Default::default()
+            },
+            sprite_sheet: sprite_sheet_assets.add(SpriteSheet {
+                grid_size: UVec2::splat(16),
+                tile_index: 0,
+            }),
+        })
+        .insert(SpriteAnimFrame(0))
+        .insert(TesselatedCollider {
+            image: red_radish.clone(),
+            tesselator_config: TesselatedColliderConfig {
+                vertice_separation: 0.,
+                ..Default::default()
+            },
+            ..Default::default()
+        })
+        .insert(RigidBody::Dynamic)
+        .insert(RotationConstraints::lock())
+        .insert(PhysicMaterial {
+            friction: 0.,
+            restitution: 0.,
+            ..Default::default()
+        })
+        .insert(Velocity::from_linear(Vec3::default()))
+        .insert(Player::new("Bob".to_string()));
+}
+
 // Change the player velocity and animation based on the key press.
 fn player_movement(
     mut frame: Local<u8>,
