@@ -13,3 +13,4 @@ edition = "2018"
 bevy = { version = "0.5", default-features=false }
 bevy_retrograde = "0.2"
 rand = "0.8"
+noise = "0.7"
