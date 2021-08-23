@@ -116,6 +116,9 @@ fn setup(
 
     // Lets load all our textures from our folder!
     let mut texture_atlas_builder = TextureAtlasBuilder::default();
+
+    // Adding this line waits for the assets to be load before accessing them, therefore the crash
+    // at the start is dodged
     if let LoadState::Loaded =
         asset_server.get_group_load_state(sprite_handles.handles.iter().map(|handle| handle.id))
     {
