@@ -6,13 +6,25 @@ use ggez::{
     Context, ContextBuilder, GameError, GameResult,
 };
 
+mod input;
 mod map;
+mod physics;
+mod player;
 
-struct Game {}
+struct Game {
+    map: map::Map,
+}
 
 impl Game {
     fn new(ctx: &mut Context) -> GameResult<Self> {
-        Ok(Game {})
+        let mut id = 0;
+        // set the tile size
+        let tile_size = 10.;
+
+        // load the map
+        let mut map = map::Map::new(tile_size, &mut id);
+        map.load_new_map("game_jam_map_test_1".to_string(), ctx);
+        Ok(Game { map: map })
     }
 }
 impl EventHandler<GameError> for Game {

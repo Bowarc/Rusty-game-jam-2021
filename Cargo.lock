@@ -2049,6 +2049,8 @@ name = "rusty_game-jam-2021-ggez"
 version = "0.1.0"
 dependencies = [
  "ggez",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
