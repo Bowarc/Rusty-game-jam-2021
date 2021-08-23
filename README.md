@@ -4,7 +4,7 @@
 Hello, this is the repo of the team Eragon, Renko, Bowarc for the rusty jam of 2021
 
 
-How to use:
+                                        HOW TO USE:
 
 Put the content of the `/assets` folder in  `/target/debug/resources` or in `/target/release/resources`
 
