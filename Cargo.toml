@@ -1,7 +1,11 @@
 [package]
-name = "rusty_game-jam-2021-ggez"
+name = "rusty-game-jam-2021"
 version = "0.1.0"
 edition = "2018"
+authors = [
+    "Bowarc <yuyeaaaahhhh@laposte.net>",
+    "Eragon <eragon@eragon.re>"
+]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
