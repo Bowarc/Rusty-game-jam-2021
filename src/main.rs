@@ -32,7 +32,7 @@ impl EventHandler<GameError> for Game {
         Ok(())
     }
     fn draw(&mut self, ctx: &mut ggez::Context) -> GameResult {
-        graphics::clear(ctx, Color::from_rgba(100, 100, 100, 1));
+        graphics::clear(ctx, Color::from_rgba(100, 100, 100, 255));
 
         graphics::present(ctx);
         Ok(())
