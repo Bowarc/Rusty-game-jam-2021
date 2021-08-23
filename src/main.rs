@@ -17,11 +17,13 @@ impl Game {
 }
 impl EventHandler<GameError> for Game {
     fn update(&mut self, ctx: &mut ggez::Context) -> GameResult {
-        todo!()
+        Ok(())
     }
     fn draw(&mut self, ctx: &mut ggez::Context) -> GameResult {
         graphics::clear(ctx, Color::from_rgba(100, 100, 100, 1));
-        todo!()
+
+        graphics::present(ctx);
+        Ok(())
     }
 }
 
