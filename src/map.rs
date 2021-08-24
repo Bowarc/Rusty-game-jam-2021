@@ -5,7 +5,9 @@ use serde_json::Value; //Result
 use std::collections::HashMap;
 use std::io::Read;
 use std::time::SystemTime;
+
 const MAP_FILE: &str = "map_settings.json";
+
 pub struct Map {
     pub map_title: String,
     pub tile_size: f32,
