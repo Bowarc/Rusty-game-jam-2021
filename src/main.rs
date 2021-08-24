@@ -34,7 +34,7 @@ impl Game {
 
         // Create the player
         let player_spawn_pos = glam::Vec2::new(tile_size * 5., tile_size * 5.);
-        let player = player::Player::new(player_spawn_pos.x, player_spawn_pos.y, 25., 25., 0);
+        let player = player::Player::new(player_spawn_pos.x, player_spawn_pos.y, 25., 25., &mut 0);
 
         // Create the camera
         let camera = camera::Camera::new(32., 18.);
@@ -73,7 +73,12 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
         }
 
         // Update menu
-        self.menu.main_menu(self.window_size, ctx);
+        if self.menu.show_main {
+            self.menu.main_menu(self.window_size, ctx);
+        }
+        if self.menu.show_settings {
+            self.menu.settings_menu(self.window_size);
+        }
 
         // Update player
         self.player.update_movements(&mut self.map.bloc_list, dt);
@@ -100,7 +105,7 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
         let draw_offset = glam::Vec2::new(-self.camera.scroll.x, -self.camera.scroll.y);
         self.map.draw(ctx, draw_offset)?;
         self.player.draw(ctx, draw_offset)?;
-        if self.menu.show {
+        if self.menu.show_main || self.menu.show_settings {
             self.menu.draw(ctx, draw_offset)?;
         }
 
@@ -109,7 +114,7 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
     }
     fn key_down_event(
         &mut self,
-        ctx: &mut ggez::Context,
+        _ctx: &mut ggez::Context,
         keycode: ggez::event::KeyCode,
         keymod: ggez::input::keyboard::KeyMods,
         _repeat: bool,
@@ -120,7 +125,7 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
             ggez::event::KeyCode::S => self.player.inputs.down = true,
             ggez::event::KeyCode::Q => self.player.inputs.left = true,
             ggez::event::KeyCode::D => self.player.inputs.right = true,
-            ggez::event::KeyCode::Escape => self.menu.show = true,
+            ggez::event::KeyCode::Escape => self.menu.show_main = true,
             _ => (),
         }
     }
