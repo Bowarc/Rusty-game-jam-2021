@@ -5,10 +5,10 @@ mod bloc;
 mod camera;
 mod input;
 mod map;
+mod menu;
 mod monster;
 mod physics;
 mod player;
-mod menu;
 
 const GAMEPAD_DEAD_ZONE: f32 = 0.5;
 const GAMEPAD_SPEED: f32 = 400.;
@@ -125,7 +125,16 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
             ggez::event::KeyCode::S => self.player.inputs.down = true,
             ggez::event::KeyCode::Q => self.player.inputs.left = true,
             ggez::event::KeyCode::D => self.player.inputs.right = true,
-            ggez::event::KeyCode::Escape => self.menu.show_main = true,
+            ggez::event::KeyCode::Escape => {
+                if !self.menu.show_main && !self.menu.show_settings {
+                    self.menu.show_main = true
+                } else if self.menu.show_settings {
+                    self.menu.show_settings = false;
+                    self.menu.show_main = true
+                } else if self.menu.show_main {
+                    self.menu.show_main = true
+                }
+            }
             _ => (),
         }
     }
@@ -186,16 +195,9 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
         }
     }
 
-    fn mouse_motion_event(
-        &mut self,
-        _ctx: &mut ggez::Context,
-        x: f32,
-        y: f32,
-        _dx: f32,
-        _dy: f32,
-    ) {
+    fn mouse_motion_event(&mut self, _ctx: &mut ggez::Context, x: f32, y: f32, _dx: f32, _dy: f32) {
         self.menu.egui_backend.input.mouse_motion_event(x, y);
-        self.player.inputs.pointing = physics::Pos2D {x: x, y: y};
+        self.player.inputs.pointing = physics::Pos2D { x: x, y: y };
         self.player.inputs.gamepad = false;
     }
 
