@@ -44,7 +44,7 @@ impl Player {
         delta_pos.x += dir.x * (self.speed * dt);
         delta_pos.y += dir.y * (self.speed * dt);
         self.hitbox = physics::CheckCollision::world_collision(self.hitbox, delta_pos, bloclist);
-        println!("x: {}, y: {}", self.hitbox.x, self.hitbox.y);
+        // println!("x: {}, y: {}", self.hitbox.x, self.hitbox.y);
     }
     pub fn draw(&self, ctx: &mut ggez::Context, draw_offset: glam::Vec2) -> ggez::GameResult {
         let mut hitbox_mesh = ggez::graphics::MeshBuilder::new();
