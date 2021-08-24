@@ -8,6 +8,7 @@ mod map;
 mod monster;
 mod physics;
 mod player;
+mod menu;
 
 const GAMEPAD_DEAD_ZONE: f32 = 0.5;
 const GAMEPAD_SPEED: f32 = 400.;
@@ -18,6 +19,7 @@ struct Game {
     monster_list: Vec<monster::Monster>,
     camera: camera::Camera,
     window_size: glam::Vec2,
+    menu: menu::Gui,
 }
 
 impl Game {
@@ -32,7 +34,7 @@ impl Game {
 
         // Create the player
         let player_spawn_pos = glam::Vec2::new(tile_size * 5., tile_size * 5.);
-        let player = player::Player::new(player_spawn_pos.x, player_spawn_pos.y, 25., 25., &mut 0);
+        let player = player::Player::new(player_spawn_pos.x, player_spawn_pos.y, 25., 25., 0);
 
         // Create the camera
         let camera = camera::Camera::new(32., 18.);
@@ -40,12 +42,15 @@ impl Game {
         // Create the monsters (empty for now)
         let monster_list: Vec<monster::Monster> = Vec::new();
 
+        let main_menu = menu::Gui::new();
+
         Ok(Game {
             map: map,
             player: player,
             monster_list: monster_list,
             camera: camera,
             window_size: glam::Vec2::ZERO,
+            menu: main_menu,
         })
     }
 }
@@ -66,7 +71,9 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
                 _ => {}
             }
         }
-        println!("{:#?}", self.player.inputs.pointing);
+
+        // Update menu
+        self.menu.main_menu(self.window_size, ctx);
 
         // Update player
         self.player.update_movements(&mut self.map.bloc_list, dt);
@@ -93,6 +100,9 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
         let draw_offset = glam::Vec2::new(-self.camera.scroll.x, -self.camera.scroll.y);
         self.map.draw(ctx, draw_offset)?;
         self.player.draw(ctx, draw_offset)?;
+        if self.menu.show {
+            self.menu.draw(ctx, draw_offset)?;
+        }
 
         ggez::graphics::present(ctx)?;
         Ok(())
@@ -101,15 +111,16 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
         &mut self,
         ctx: &mut ggez::Context,
         keycode: ggez::event::KeyCode,
-        _keymod: ggez::input::keyboard::KeyMods,
+        keymod: ggez::input::keyboard::KeyMods,
         _repeat: bool,
     ) {
+        self.menu.egui_backend.input.key_down_event(keycode, keymod);
         match keycode {
             ggez::event::KeyCode::Z => self.player.inputs.up = true,
             ggez::event::KeyCode::S => self.player.inputs.down = true,
             ggez::event::KeyCode::Q => self.player.inputs.left = true,
             ggez::event::KeyCode::D => self.player.inputs.right = true,
-            ggez::event::KeyCode::Escape => ggez::event::quit(ctx),
+            ggez::event::KeyCode::Escape => self.menu.show = true,
             _ => (),
         }
     }
@@ -135,6 +146,7 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
         _x: f32,
         _y: f32,
     ) {
+        self.menu.egui_backend.input.mouse_button_down_event(button);
         match button {
             ggez::input::mouse::MouseButton::Left => {}
             ggez::input::mouse::MouseButton::Right => {}
@@ -149,6 +161,7 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
         _x: f32,
         _y: f32,
     ) {
+        self.menu.egui_backend.input.mouse_button_up_event(button);
         match button {
             ggez::input::mouse::MouseButton::Left => {
                 // self
@@ -168,14 +181,26 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
         }
     }
 
-    fn mouse_motion_event(&mut self, _ctx: &mut ggez::Context, x: f32, y: f32, _dx: f32, _dy: f32) {
-        self.player.inputs.pointing = physics::Pos2D { x: x, y: y };
+    fn mouse_motion_event(
+        &mut self,
+        _ctx: &mut ggez::Context,
+        x: f32,
+        y: f32,
+        _dx: f32,
+        _dy: f32,
+    ) {
+        self.menu.egui_backend.input.mouse_motion_event(x, y);
+        self.player.inputs.pointing = physics::Pos2D {x: x, y: y};
         self.player.inputs.gamepad = false;
     }
 
-    fn mouse_wheel_event(&mut self, _ctx: &mut ggez::Context, _x: f32, _y: f32) {}
+    fn mouse_wheel_event(&mut self, _ctx: &mut ggez::Context, x: f32, y: f32) {
+        self.menu.egui_backend.input.mouse_wheel_event(x, y);
+    }
 
-    fn text_input_event(&mut self, _ctx: &mut ggez::Context, _character: char) {}
+    fn text_input_event(&mut self, _ctx: &mut ggez::Context, character: char) {
+        self.menu.egui_backend.input.text_input_event(character);
+    }
 
     fn gamepad_button_down_event(
         &mut self,
@@ -249,13 +274,14 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
         }
     }
 
-    fn focus_event(&mut self, ctx: &mut ggez::Context, gained: bool) {}
+    fn focus_event(&mut self, _ctx: &mut ggez::Context, _gained: bool) {}
 
     fn quit_event(&mut self, _ctx: &mut ggez::Context) -> bool {
         false
     }
 
     fn resize_event(&mut self, _ctx: &mut ggez::Context, width: f32, height: f32) {
+        self.menu.egui_backend.input.resize_event(width, height);
         self.window_size = glam::Vec2::new(width, height);
         println!("Resized to {}x{}", width, height);
     }
