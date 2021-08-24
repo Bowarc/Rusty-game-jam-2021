@@ -146,9 +146,9 @@ impl Map {
         self.bloc_list = bloclist;
         println!("Bloc list size: {}", self.bloc_list.len());
     }
-    pub fn draw(&self, ctx: &mut ggez::Context, draw_offset: glam::Vec2) -> ggez::GameResult {
-        let draw_hitboxes = true;
-        let draw_images = false;
+    pub fn draw(&mut self, ctx: &mut ggez::Context, draw_offset: glam::Vec2) -> ggez::GameResult {
+        let draw_hitboxes = false;
+        let draw_images = true;
 
         if draw_hitboxes {
             self.draw_hitboxes(ctx, draw_offset)?;
@@ -159,10 +159,44 @@ impl Map {
         Ok(())
     }
     pub fn draw_images(
-        &self,
-        _ctx: &mut ggez::Context,
-        _draw_offset: glam::Vec2,
+        &mut self,
+        ctx: &mut ggez::Context,
+        draw_offset: glam::Vec2,
     ) -> ggez::GameResult {
+        let tile_size_mult = self.tile_size / 32.;
+        let rotation_offset = 0.;
+
+        for bloc in self.bloc_list.iter() {
+            let tile = match bloc {
+                bloc::Bloc::Air(a) => &a.tile,
+                bloc::Bloc::Wall(w) => &w.tile,
+            };
+
+            if tile.material == -1 {
+                continue;
+            }
+
+            let point = glam::Vec2::new(0.5, 0.5);
+            let tile_drawparams = ggez::graphics::DrawParam::new()
+                .dest(ggez::mint::Point2::from_slice(&[
+                    tile.hitbox.center().x,
+                    tile.hitbox.center().y,
+                ]))
+                .scale(ggez::mint::Vector2::from_slice(&[
+                    tile_size_mult,
+                    tile_size_mult,
+                ]))
+                .offset(point)
+                .rotation(tile.angle + rotation_offset);
+            let h = self.image_hashmap.get_mut(&(tile.material as i32)).unwrap();
+            h.add(tile_drawparams);
+        }
+
+        for image in self.image_hashmap.clone().keys() {
+            let h = self.image_hashmap.get_mut(image).unwrap();
+            ggez::graphics::draw(ctx, h, (draw_offset, 0., ggez::graphics::Color::WHITE))?;
+            h.clear();
+        }
         Ok(())
     }
     pub fn draw_hitboxes(

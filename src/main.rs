@@ -215,7 +215,7 @@ fn main() -> ggez::GameResult {
         .window_setup(
             ggez::conf::WindowSetup::default()
                 .title("The game title")
-                .vsync(true),
+                .vsync(false),
         )
         .window_mode(
             ggez::conf::WindowMode::default()
