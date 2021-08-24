@@ -26,16 +26,16 @@ impl Player {
     pub fn update_movements(&mut self, bloclist: &mut Vec<bloc::Bloc>, dt: f32) {
         let mut dir = glam::Vec2::ZERO;
         let mut delta_pos = glam::Vec2::ZERO;
-        if self.inputs.key_z {
+        if self.inputs.up {
             dir.y -= 1.;
         }
-        if self.inputs.key_s {
+        if self.inputs.down {
             dir.y += 1.;
         }
-        if self.inputs.key_q {
+        if self.inputs.left {
             dir.x -= 1.;
         }
-        if self.inputs.key_d {
+        if self.inputs.right {
             dir.x += 1.;
         }
         dir = physics::normalize_point(dir);

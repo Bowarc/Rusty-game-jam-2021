@@ -8,6 +8,9 @@ mod map;
 mod monster;
 mod physics;
 mod player;
+
+const GAMEPAD_DEAD_ZONE: f32 = 0.5;
+
 struct Game {
     map: map::Map,
     player: player::Player,
@@ -86,10 +89,10 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
         _repeat: bool,
     ) {
         match keycode {
-            ggez::event::KeyCode::Z => self.player.inputs.key_z = true,
-            ggez::event::KeyCode::S => self.player.inputs.key_s = true,
-            ggez::event::KeyCode::Q => self.player.inputs.key_q = true,
-            ggez::event::KeyCode::D => self.player.inputs.key_d = true,
+            ggez::event::KeyCode::Z => self.player.inputs.up = true,
+            ggez::event::KeyCode::S => self.player.inputs.down = true,
+            ggez::event::KeyCode::Q => self.player.inputs.left = true,
+            ggez::event::KeyCode::D => self.player.inputs.right = true,
             ggez::event::KeyCode::Escape => ggez::event::quit(ctx),
             _ => (),
         }
@@ -101,10 +104,10 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
         _keymod: ggez::input::keyboard::KeyMods,
     ) {
         match keycode {
-            ggez::event::KeyCode::Z => self.player.inputs.key_z = false,
-            ggez::event::KeyCode::S => self.player.inputs.key_s = false,
-            ggez::event::KeyCode::Q => self.player.inputs.key_q = false,
-            ggez::event::KeyCode::D => self.player.inputs.key_d = false,
+            ggez::event::KeyCode::Z => self.player.inputs.up = false,
+            ggez::event::KeyCode::S => self.player.inputs.down = false,
+            ggez::event::KeyCode::Q => self.player.inputs.left = false,
+            ggez::event::KeyCode::D => self.player.inputs.right = false,
 
             _ => (),
         }
@@ -169,6 +172,7 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
         _btn: ggez::event::Button,
         _id: ggez::input::gamepad::GamepadId,
     ) {
+        println!("ctx: {:#?}\nbtn: {:#?}\nbid: {:#?}\n", _ctx, _btn, _id);
     }
 
     fn gamepad_button_up_event(
@@ -182,10 +186,39 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
     fn gamepad_axis_event(
         &mut self,
         _ctx: &mut ggez::Context,
-        _axis: ggez::event::Axis,
-        _value: f32,
+        axis: ggez::event::Axis,
+        value: f32,
         _id: ggez::input::gamepad::GamepadId,
     ) {
+        if axis == ggez::event::Axis::LeftStickY {
+            if value >= GAMEPAD_DEAD_ZONE {
+                self.player.inputs.down = false;
+                self.player.inputs.up = true;
+            }
+            else if value <= -GAMEPAD_DEAD_ZONE {
+                self.player.inputs.up = false;
+                self.player.inputs.down = true;
+            }
+            else {
+                self.player.inputs.up = false;
+                self.player.inputs.down = false;
+            }
+        }
+        if axis == ggez::event::Axis::LeftStickX {
+            if value >= GAMEPAD_DEAD_ZONE {
+                self.player.inputs.left = false;
+                self.player.inputs.right = true;
+            }
+            else if value <= -GAMEPAD_DEAD_ZONE {
+                self.player.inputs.right = false;
+                self.player.inputs.left = true;
+            }
+            else {
+                self.player.inputs.right = false;
+                self.player.inputs.left = false;
+            }
+        }
+        println!("ctx: {:#?}\naxis: {:#?}\nvalue: {:#?}\nid: {:#?}\n", _ctx, axis, value, _id);
     }
 
     fn focus_event(&mut self, ctx: &mut ggez::Context, gained: bool) {
