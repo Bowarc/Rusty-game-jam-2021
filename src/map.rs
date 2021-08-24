@@ -4,7 +4,7 @@ use ggez;
 use serde_json::Value; //Result
 use std::collections::HashMap;
 use std::io::Read;
-// use std::time::SystemTime;
+use std::time::SystemTime;
 const MAP_FILE: &str = "map_settings.json";
 pub struct Map {
     pub map_title: String,
@@ -40,6 +40,10 @@ impl Map {
     }
 
     pub fn load_new_map(&mut self, map_name: String, ctx: &mut ggez::Context) -> ggez::GameResult {
+        let start_time = SystemTime::now();
+
+        println!("Loading map: {}", map_name);
+
         let map_file_path = format!("/maps/{}/{}", map_name, MAP_FILE);
         // let mut file = ggezfs::open(ctx, format!("/maps/{}/{}", map_name, MAP_FILE_NAME)).unwrap();
         let mut file = ggez::filesystem::open(ctx, map_file_path).unwrap();
@@ -67,6 +71,20 @@ impl Map {
 
         let mut image_hashmap: HashMap<i32, ggez::graphics::spritebatch::SpriteBatch> =
             HashMap::new();
+        for (key, value) in tile_translate.iter() {
+            if value != "air" {
+                let mut texture_file_name: String = value.to_string();
+                texture_file_name.push_str(".png");
+                let pth = format!("/maps/{}/tiles/{}", map_name, texture_file_name);
+                println!("Loading: '{}'", pth);
+                let image = ggez::graphics::Image::new(ctx, pth);
+                image_hashmap.insert(
+                    *key,
+                    ggez::graphics::spritebatch::SpriteBatch::new(image.clone().unwrap()),
+                );
+            } else {
+            }
+        }
 
         self.map_file_content =
             serde_json::from_str(&map_file_data["map_data"].to_string()).unwrap();
@@ -75,8 +93,24 @@ impl Map {
         self.diag_size =
             physics::get_diagonal_size(self.total_cols, self.total_rows, self.tile_size);
         self.map_title = map_file_data["config"]["name"].to_string();
+        self.image_hashmap = image_hashmap;
 
         self.crate_tilemap(ghost_tiles);
+
+        match start_time.elapsed() {
+            Ok(elapsed) => {
+                println!(
+                    "Map: `{}` has been loaded in {} ms.",
+                    map_file_data["config"]["name"]
+                        .to_string()
+                        .replace(&['"'][..], ""),
+                    elapsed.as_millis()
+                );
+            }
+            Err(e) => {
+                println!("Error: {:?}", e);
+            }
+        }
         Ok(())
     }
     pub fn crate_tilemap(&mut self, transparent_tiles: Vec<f32>) {

@@ -4,6 +4,10 @@
    "rows": 50,
    "cols": 50
   },
+  "tile_translate": {
+    "-1": "air",
+    "4": "wall"
+  },
   "ghost_tiles":[
     -1
   ],
