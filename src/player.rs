@@ -13,7 +13,7 @@ pub struct Player {
 }
 
 impl Player {
-    pub fn new(x: f32, y: f32, w: f32, h: f32, id: i32) -> Self {
+    pub fn new(x: f32, y: f32, w: f32, h: f32, &mut id: i32) -> Self {
         Player {
             id: id,
             name: "bob".to_string(),
@@ -55,7 +55,8 @@ impl Player {
             -camera_scroll.x + self.hitbox.center().x,
             -camera_scroll.y + self.hitbox.center().y,
         );
-        self.los.angle = (self.inputs.pointing.y - hitbox_center.1).atan2(self.inputs.pointing.x - hitbox_center.0);
+        self.los.angle = (self.inputs.pointing.y - hitbox_center.1)
+            .atan2(self.inputs.pointing.x - hitbox_center.0);
 
         let weapon_range = 500.;
 
@@ -96,7 +97,11 @@ impl Player {
         let gun_rect =
             ggez::graphics::Rect::new(self.hitbox.w / 2.0 - 10., self.hitbox.h / 2.0, 30.0, 10.0);
 
-        gunmesh.rectangle(ggez::graphics::DrawMode::stroke(1.0), gun_rect, ggez::graphics::Color::WHITE)?;
+        gunmesh.rectangle(
+            ggez::graphics::DrawMode::stroke(1.0),
+            gun_rect,
+            ggez::graphics::Color::WHITE,
+        )?;
         let builded_gunmesh = gunmesh.build(ctx)?;
         ggez::graphics::draw(
             ctx,
