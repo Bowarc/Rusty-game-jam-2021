@@ -13,9 +13,9 @@ pub struct Player {
 }
 
 impl Player {
-    pub fn new(x: f32, y: f32, w: f32, h: f32, _id: &mut i32) -> Self {
+    pub fn new(x: f32, y: f32, w: f32, h: f32, id: i32) -> Self {
         Player {
-            id: 0,
+            id: id,
             name: "bob".to_string(),
             hitbox: ggez::graphics::Rect::new(x, y, w, h),
             inputs: input::Input::default(),
