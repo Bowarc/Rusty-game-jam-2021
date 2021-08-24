@@ -56,14 +56,14 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
         // Update mouse/gamepad position
         if self.player.inputs.gamepad {
             match self.player.inputs.rightpad.x {
-                1 => {self.player.inputs.pointing.x += GAMEPAD_SPEED},
-                -1 => {self.player.inputs.pointing.x -= GAMEPAD_SPEED},
-                _ => {},
+                1 => self.player.inputs.pointing.x += GAMEPAD_SPEED,
+                -1 => self.player.inputs.pointing.x -= GAMEPAD_SPEED,
+                _ => {}
             }
             match self.player.inputs.rightpad.y {
-                1 => {self.player.inputs.pointing.y += GAMEPAD_SPEED},
-                -1 => {self.player.inputs.pointing.y -= GAMEPAD_SPEED},
-                _ => {},
+                1 => self.player.inputs.pointing.y += GAMEPAD_SPEED,
+                -1 => self.player.inputs.pointing.y -= GAMEPAD_SPEED,
+                _ => {}
             }
         }
         println!("{:#?}", self.player.inputs.pointing);
@@ -168,15 +168,8 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
         }
     }
 
-    fn mouse_motion_event(
-        &mut self,
-        _ctx: &mut ggez::Context,
-        x: f32,
-        y: f32,
-        _dx: f32,
-        _dy: f32,
-    ) {
-        self.player.inputs.pointing = physics::Pos2D {x: x, y: y};
+    fn mouse_motion_event(&mut self, _ctx: &mut ggez::Context, x: f32, y: f32, _dx: f32, _dy: f32) {
+        self.player.inputs.pointing = physics::Pos2D { x: x, y: y };
         self.player.inputs.gamepad = false;
     }
 
@@ -214,53 +207,45 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
                 if value >= GAMEPAD_DEAD_ZONE {
                     self.player.inputs.down = false;
                     self.player.inputs.up = true;
-                }
-                else if value <= -GAMEPAD_DEAD_ZONE {
+                } else if value <= -GAMEPAD_DEAD_ZONE {
                     self.player.inputs.up = false;
                     self.player.inputs.down = true;
-                }
-                else {
+                } else {
                     self.player.inputs.up = false;
                     self.player.inputs.down = false;
                 }
-            },
+            }
             ggez::event::Axis::LeftStickX => {
                 if value >= GAMEPAD_DEAD_ZONE {
                     self.player.inputs.left = false;
                     self.player.inputs.right = true;
-                }
-                else if value <= -GAMEPAD_DEAD_ZONE {
+                } else if value <= -GAMEPAD_DEAD_ZONE {
                     self.player.inputs.right = false;
                     self.player.inputs.left = true;
-                }
-                else {
+                } else {
                     self.player.inputs.right = false;
                     self.player.inputs.left = false;
                 }
-            },
+            }
             ggez::event::Axis::RightStickX => {
                 if value >= GAMEPAD_DEAD_ZONE {
                     self.player.inputs.rightpad.x = 1;
-                }
-                else if value <= -GAMEPAD_DEAD_ZONE {
+                } else if value <= -GAMEPAD_DEAD_ZONE {
                     self.player.inputs.rightpad.x = -1;
-                }
-                else {
+                } else {
                     self.player.inputs.rightpad.x = 0;
                 }
-            },
+            }
             ggez::event::Axis::RightStickY => {
                 if value >= GAMEPAD_DEAD_ZONE {
                     self.player.inputs.rightpad.y = -1;
-                }
-                else if value <= -GAMEPAD_DEAD_ZONE {
+                } else if value <= -GAMEPAD_DEAD_ZONE {
                     self.player.inputs.rightpad.y = 1;
-                }
-                else {
+                } else {
                     self.player.inputs.rightpad.y = 0;
                 }
             }
-            _ => {},
+            _ => {}
         }
     }
 
