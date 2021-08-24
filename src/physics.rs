@@ -25,6 +25,12 @@ pub enum RayCastResult {
     Fail,
 }
 
+pub enum CollisionResult {
+    In,
+    Touch,
+    Out,
+}
+
 pub struct CheckCollision;
 pub struct RayCasting;
 
@@ -41,34 +47,22 @@ pub struct Pos2D<T> {
 }
 impl Default for Pos2D<f32> {
     fn default() -> Self {
-        Self {
-            x: 0.0,
-            y: 0.0,
-        }
+        Self { x: 0.0, y: 0.0 }
     }
 }
 impl Default for Pos2D<i32> {
     fn default() -> Self {
-        Self {
-            x: 0,
-            y: 0,
-        }
+        Self { x: 0, y: 0 }
     }
 }
 impl<T> From<mint::Point2<T>> for Pos2D<T> {
     fn from(p: mint::Point2<T>) -> Self {
-        Self {
-            x: p.x,
-            y: p.y,
-        }
+        Self { x: p.x, y: p.y }
     }
 }
 impl<T> From<Pos2D<T>> for mint::Point2<T> {
     fn from(p: Pos2D<T>) -> Self {
-        Self {
-            x: p.x,
-            y: p.y,
-        }
+        Self { x: p.x, y: p.y }
     }
 }
 impl From<Pos2D<f32>> for glam::Vec2 {
@@ -85,8 +79,7 @@ impl From<Pos2D<f32>> for glam::Vec2 {
 // }
 
 pub struct Circle {
-    x: f32,
-    y: f32,
+    center: glam::Vec2,
     radius: f32,
 }
 
@@ -174,11 +167,61 @@ impl CheckCollision {
     }
     pub fn two_circle(circle1: Circle, circle2: Circle) -> bool {
         // https://developer.mozilla.org/fr/docs/Games/Techniques/2D_collision_detection
-        let dx = circle1.x - circle2.x;
-        let dy = circle1.y - circle2.y;
+        let dx = circle1.center.x - circle2.center.x;
+        let dy = circle1.center.y - circle2.center.y;
         let distance = (dx * dx + dy * dy).sqrt();
 
         distance < circle1.radius + circle2.radius
+    }
+
+    pub fn get_closest_point(line: (glam::Vec2, glam::Vec2), point: glam::Vec2) -> glam::Vec2 {
+        let lineA = line.0;
+        let lineB = line.1;
+        let a_to_b = (lineB.x - lineA.x, lineB.y - lineA.y);
+
+        let perpendicular = (-a_to_b.1, a_to_b.0);
+
+        let q = glam::Vec2::new(point.x + perpendicular.0, point.y + perpendicular.1);
+
+        glam::Vec2::new(
+            ((lineA.x * lineB.y - lineA.y * lineB.x) * (point.x - q.x)
+                - (lineA.x - lineB.x) * (point.x * q.y - point.y * q.x))
+                / ((lineA.x - lineB.x) * (point.y - q.y) - (lineA.y - lineB.y) * (point.y - q.y)),
+            ((lineA.x * lineB.y - lineA.y * lineB.x) * (point.y - q.y)
+                - (lineA.y - lineB.y) * (point.x * q.y - point.y * q.x))
+                / ((lineA.x - lineB.x) * (point.y - q.y) - (lineA.y - lineB.y) * (point.y - q.y)),
+        )
+    }
+    pub fn point_in_circle(point: glam::Vec2, circle: Circle) -> CollisionResult {
+        let dist_point_circle_center = RayCasting::get_distance(circle.center, point);
+
+        if dist_point_circle_center > circle.radius {
+            // The point is outside the circle
+            CollisionResult::Out
+        } else if dist_point_circle_center < circle.radius {
+            // The point is in the circle
+            CollisionResult::In
+        } else {
+            // The point is on the circle ring
+            CollisionResult::Touch
+        }
+    }
+    pub fn line_cross_circle(line: (glam::Vec2, glam::Vec2), circle: Circle) -> CollisionResult {
+        let closest_point = CheckCollision::get_closest_point(line, circle.center);
+
+        let collision_result = CheckCollision::point_in_circle(closest_point, circle);
+        // let result = collision_result{
+        //     CollisionResult::Out => {
+        //         // The line doesn't cross the circle
+        //     }
+        //     CollisionResult::In => {
+        //         // The line does cross the circle
+        //     }
+        //     CollisionResult::Touch => {
+        //         // The line touches the circle
+        //     }
+        // };
+        collision_result
     }
     pub fn world_collision(
         entity_hitbox: ggez::graphics::Rect,
@@ -204,7 +247,6 @@ impl CheckCollision {
                     entity_hitbox.w,
                     entity_hitbox.h,
                 );
-
                 let dy = ggez::graphics::Rect::new(
                     entity_hitbox.x,
                     next_pos.y,
