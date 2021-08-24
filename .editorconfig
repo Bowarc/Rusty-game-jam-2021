@@ -12,9 +12,6 @@ insert_final_newline = true
 charset = utf-8
 
 # Tab indentation (no size specified)
-[*.{rs,toml}]
-indent_style = tab
-
-[*.md]
+[*.{rs,toml,*.md}]
 indent_style = space
 indent_size = 4
