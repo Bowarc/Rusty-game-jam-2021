@@ -1,7 +1,7 @@
 #[derive(Default)]
 pub struct Input {
-    KeyZ: bool,
-    KeyQ: bool,
-    KeyS: bool,
-    KeyD: bool,
+    pub key_z: bool,
+    pub key_q: bool,
+    pub key_s: bool,
+    pub key_d: bool,
 }
