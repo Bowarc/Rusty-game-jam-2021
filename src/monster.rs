@@ -16,7 +16,7 @@ pub struct TestBot {
 }
 
 impl TestBot {
-    pub fn new(x: f32, y: f32, w: f32, h: f32, id: &mut i32) -> Self {
+    pub fn new(x: f32, y: f32, w: f32, h: f32, _id: &mut i32) -> Self {
         TestBot {
             id: 0,
             name: "monster_name".to_string(),

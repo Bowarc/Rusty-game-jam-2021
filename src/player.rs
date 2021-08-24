@@ -13,7 +13,7 @@ pub struct Player {
 }
 
 impl Player {
-    pub fn new(x: f32, y: f32, w: f32, h: f32, id: &mut i32) -> Self {
+    pub fn new(x: f32, y: f32, w: f32, h: f32, _id: &mut i32) -> Self {
         Player {
             id: 0,
             name: "bob".to_string(),
@@ -26,7 +26,6 @@ impl Player {
     pub fn update_movements(&mut self, bloclist: &mut Vec<bloc::Bloc>, dt: f32) {
         let mut dir = glam::Vec2::ZERO;
         let mut delta_pos = glam::Vec2::ZERO;
-
         if self.inputs.key_z {
             dir.y -= 1.;
         }
@@ -39,7 +38,6 @@ impl Player {
         if self.inputs.key_d {
             dir.x += 1.;
         }
-
         dir = physics::normalize_point(dir);
         delta_pos.x += dir.x * (self.speed * dt);
         delta_pos.y += dir.y * (self.speed * dt);
@@ -78,7 +76,7 @@ impl Player {
             physics::RayCasting::ray_cast_tile_monster(line_of_sight, bloclist, monster_list);
 
         match result {
-            physics::RayCastResult::Ok(line, ref _bloc, dist) => {
+            physics::RayCastResult::Ok(line, ref _bloc, _dist) => {
                 let new_pt = glam::Vec2::new(line.1.x, line.1.y);
                 self.los.end_point = new_pt;
             }
