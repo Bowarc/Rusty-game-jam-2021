@@ -5,11 +5,13 @@ mod bloc;
 mod camera;
 mod input;
 mod map;
+mod monster;
 mod physics;
 mod player;
 struct Game {
     map: map::Map,
     player: player::Player,
+    monster_list: Vec<monster::Monster>,
     camera: camera::Camera,
     window_size: glam::Vec2,
 }
@@ -31,9 +33,13 @@ impl Game {
         // Create the camera
         let camera = camera::Camera::new(32., 18.);
 
+        // Create the monsters (empty for now)
+        let monster_list: Vec<monster::Monster> = Vec::new();
+
         Ok(Game {
             map: map,
             player: player,
+            monster_list: monster_list,
             camera: camera,
             window_size: glam::Vec2::ZERO,
         })
@@ -42,7 +48,14 @@ impl Game {
 impl ggez::event::EventHandler<ggez::GameError> for Game {
     fn update(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult {
         let dt = ggez::timer::delta(ctx).as_secs_f32();
+        let mouse_pos = ggez::input::mouse::position(ctx);
         self.player.update_movements(&mut self.map.bloc_list, dt);
+        self.player.update_los(
+            mouse_pos,
+            self.camera.scroll,
+            &mut self.map.bloc_list,
+            &mut self.monster_list,
+        );
 
         self.camera.set_focus(
             (
@@ -207,7 +220,7 @@ fn main() -> ggez::GameResult {
         .window_mode(
             ggez::conf::WindowMode::default()
                 .dimensions(1920., 1080.)
-                .fullscreen_type(ggez::conf::FullscreenType::True)
+                .fullscreen_type(ggez::conf::FullscreenType::Desktop)
                 .resizable(false),
         );
     // maybe resource dir

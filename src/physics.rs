@@ -1,24 +1,48 @@
 use ggez;
 use glam;
 
-use crate::{bloc, map};
+use crate::{bloc, monster, player};
 
-pub trait CollisionEntity {
+pub trait EntityTrait {
     fn get_hitbox(&self) -> ggez::graphics::Rect;
+    fn ray_cast_bypass(&self) -> bool;
+    fn rotated_hitbox(&self) -> Vec<glam::Vec2>;
+    fn id(&self) -> i32;
 }
-pub struct CheckCollision;
 
+#[derive(Debug, Clone)]
+pub enum RayCastBlocType {
+    Bloc(usize),
+    Bot(usize),
+    Player(usize),
+    Other,
+}
+#[derive(Debug, Clone)]
+pub enum RayCastResult {
+    Ok((glam::Vec2, glam::Vec2), RayCastBlocType, f32),
+    // (line),(bloc type, index), distance
+    Fail,
+}
+
+pub struct CheckCollision;
+pub struct RayCasting;
+
+pub struct LOS {
+    pub angle: f32,
+    pub end_point: glam::Vec2,
+    pub result: RayCastResult,
+}
 pub struct Point2 {
     x: f32,
     y: f32,
 }
 
-pub struct RotatedHitbox {
-    p1: glam::Vec2,
-    p2: glam::Vec2,
-    p3: glam::Vec2,
-    p4: glam::Vec2,
-}
+// pub struct RotatedHitbox {
+//     p1: glam::Vec2,
+//     p2: glam::Vec2,
+//     p3: glam::Vec2,
+//     p4: glam::Vec2,
+// }
 
 pub struct Circle {
     x: f32,
@@ -91,6 +115,15 @@ pub fn rotate_square(r: ggez::graphics::Rect, angle: f32) -> Vec<glam::Vec2> {
     // }
 }
 
+impl LOS {
+    pub fn default() -> Self {
+        LOS {
+            angle: 0.,
+            end_point: glam::Vec2::new(0., 0.),
+            result: RayCastResult::Fail,
+        }
+    }
+}
 impl CheckCollision {
     pub fn two_rect(rect1: ggez::graphics::Rect, rect2: ggez::graphics::Rect) -> bool {
         let is_collision = rect1.x < rect2.x + rect2.w
@@ -162,18 +195,214 @@ impl CheckCollision {
     }
 }
 
-impl RotatedHitbox {
-    pub fn new(r: ggez::graphics::Rect, angle: f32) -> Self {
-        // rotate_square(r, angle)
-        RotatedHitbox {
-            p1: glam::Vec2::new(0., 0.),
-            p2: glam::Vec2::new(0., 0.),
-            p3: glam::Vec2::new(0., 0.),
-            p4: glam::Vec2::new(0., 0.),
+impl RayCasting {
+    pub fn get_distance(pt1: glam::Vec2, pt2: glam::Vec2) -> f32 {
+        ((pt1.x - pt2.x).powf(2.) + (pt1.y - pt2.y).powf(2.)).sqrt()
+    }
+    pub fn ccw(a: glam::Vec2, b: glam::Vec2, c: glam::Vec2) -> bool {
+        (c.y - a.y) * (b.x - a.x) > (b.y - a.y) * (c.x - a.x)
+    }
+    pub fn intersect(a: glam::Vec2, b: glam::Vec2, c: glam::Vec2, d: glam::Vec2) -> bool {
+        RayCasting::ccw(a, c, d) != RayCasting::ccw(b, c, d)
+            && RayCasting::ccw(a, b, c) != RayCasting::ccw(a, b, d)
+    }
+    pub fn check_line_interact(l1: (glam::Vec2, glam::Vec2), l2: (glam::Vec2, glam::Vec2)) -> bool {
+        let a = glam::Vec2::new(l1.0.x, l1.0.y);
+        let b = glam::Vec2::new(l1.1.x, l1.1.y);
+
+        let c = glam::Vec2::new(l2.0.x, l2.0.y);
+        let d = glam::Vec2::new(l2.1.x, l2.1.y);
+
+        RayCasting::intersect(a, b, c, d)
+    }
+    pub fn get_intersection_point(
+        x1: f32,
+        y1: f32,
+        x2: f32,
+        y2: f32,
+        x3: f32,
+        y3: f32,
+        x4: f32,
+        y4: f32,
+    ) -> glam::Vec2 {
+        let px = ((((x1 * y2) - (y1 * x2)) * (x3 - x4)) - ((x1 - x2) * ((x3 * y4) - (y3 * x4))))
+            / (((x1 - x2) * (y3 - y4)) - ((y1 - y2) * (x3 - x4)));
+
+        let py = ((((x1 * y2) - (y1 * x2)) * (y3 - y4)) - ((y1 - y2) * ((x3 * y4) - (y3 * x4))))
+            / (((x1 - x2) * (y3 - y4)) - ((y1 - y2) * (x3 - x4)));
+        glam::Vec2::new(px, py)
+    }
+    pub fn check_line_rect_intersection_points(
+        // Handle rotated hitboxes
+        line: (glam::Vec2, glam::Vec2),
+        rect: Vec<glam::Vec2>,
+    ) -> Vec<glam::Vec2> {
+        let mut result: Vec<glam::Vec2> = Vec::new();
+        let (line_1, line_2) = line;
+
+        let rect_lines = [
+            (rect[0].x, rect[0].y, rect[1].x, rect[1].y), // topleft, topright
+            (rect[1].x, rect[1].y, rect[2].x, rect[2].y), // topright, botright
+            (rect[2].x, rect[2].y, rect[3].x, rect[3].y), // botright, botleft
+            (rect[3].x, rect[3].y, rect[0].x, rect[0].y), // botleft, topleft
+        ]; // not 100% sure but i think lmao
+
+        // let (mut pX, mut pY) = (0.0, 0.0);
+
+        for r in rect_lines.iter() {
+            let (rx1, ry1, rx2, ry2) = r.clone();
+            let new_r = (glam::Vec2::new(r.0, r.1), glam::Vec2::new(r.2, r.3));
+            if RayCasting::check_line_interact(line, new_r) {
+                result.push(RayCasting::get_intersection_point(
+                    line_1.x, line_1.y, line_2.x, line_2.y, rx1, ry1, rx2, ry2,
+                ));
+            }
         }
+        result
     }
 
-    pub fn to_vec(&self) -> Vec<glam::Vec2> {
-        vec![self.p1, self.p2, self.p3, self.p4]
+    pub fn ray_cast<E: EntityTrait>(
+        line_of_sight: (glam::Vec2, glam::Vec2),
+        entity_list: &Vec<E>,
+    ) -> ((glam::Vec2, glam::Vec2), Option<usize>, bool) {
+        // let mut r_lists_index = None;
+        let mut r_item_index = None;
+        let mut is_hit = false;
+
+        let los_startpoint = glam::Vec2::new(line_of_sight.0.x, line_of_sight.0.y);
+        let mut los_endpoint = glam::Vec2::new(line_of_sight.1.x, line_of_sight.1.y);
+
+        for (index, entity) in entity_list.iter().enumerate() {
+            if !entity.ray_cast_bypass() {
+                // let lines
+                let interaction_points0 = RayCasting::check_line_rect_intersection_points(
+                    line_of_sight,
+                    entity.rotated_hitbox(),
+                );
+
+                let interaction_points = interaction_points0;
+                if interaction_points.len() > 0 {
+                    is_hit = true;
+                    for pt in interaction_points {
+                        let dist_1 = RayCasting::get_distance(los_startpoint, los_endpoint);
+                        let dist_2 = RayCasting::get_distance(los_startpoint, pt);
+                        if dist_1 > dist_2 {
+                            los_endpoint = pt.clone();
+                            r_item_index = Some(index.clone());
+                            let hitted_id = entity.id();
+                        }
+                    }
+                }
+            }
+        }
+        ((los_startpoint, los_endpoint.clone()), r_item_index, is_hit)
+    }
+    pub fn ray_cast_tile_monster(
+        los: (glam::Vec2, glam::Vec2),
+        blocs: &Vec<bloc::Bloc>,
+        bots: &Vec<monster::Monster>,
+    ) -> RayCastResult {
+        // let malist: Vec<RayCastBlocType> = vec![RayCastBlocType::Wall, RayCastBlocType::Other];
+        let mut min_d = RayCasting::get_distance(los.0, los.1);
+        // make a enum result with, as params, the r index, distance, etc..
+        // returns
+        let mut is_hit: bool = false;
+
+        let mut hit_type = RayCastBlocType::Other;
+        let mut new_los = los;
+
+        let (tile_shot, tile_index, tile_is_hit) = RayCasting::ray_cast(los, blocs);
+        if tile_is_hit {
+            is_hit = true;
+            min_d = RayCasting::get_distance(tile_shot.0, tile_shot.1);
+            new_los = (
+                glam::Vec2::new(los.0.x, los.0.y),
+                glam::Vec2::new(tile_shot.1.x, tile_shot.1.y),
+            );
+            hit_type = RayCastBlocType::Bloc(tile_index.unwrap());
+        }
+        let (bot_shot, bot_index, bot_is_hit) = RayCasting::ray_cast(tile_shot, bots);
+        if bot_is_hit {
+            is_hit = true;
+            let d = RayCasting::get_distance(bot_shot.0, bot_shot.1);
+            if d < min_d {
+                // the if bot is closes to the player than the tile
+                min_d = d;
+                hit_type = RayCastBlocType::Bot(bot_index.unwrap());
+                new_los = (
+                    glam::Vec2::new(los.0.x, los.0.y),
+                    glam::Vec2::new(bot_shot.1.x, bot_shot.1.y),
+                );
+            }
+        };
+        if is_hit {
+            let result = RayCastResult::Ok(new_los, hit_type, min_d);
+            result
+        } else {
+            let result = RayCastResult::Fail;
+            result
+        }
+    }
+    pub fn ray_cast_tile_player(
+        los: (glam::Vec2, glam::Vec2),
+        blocs: &Vec<bloc::Bloc>,
+        players: &Vec<player::Player>,
+    ) -> RayCastResult {
+        // let malist: Vec<RayCastBlocType> = vec![RayCastBlocType::Wall, RayCastBlocType::Other];
+        let mut min_d = RayCasting::get_distance(los.0, los.1);
+        // make a enum result with, as params, the r index, distance, etc..
+        // returns
+        let mut is_hit: bool = false;
+
+        let mut hit_type = RayCastBlocType::Other;
+        let mut new_los = los;
+
+        let (tile_shot, tile_index, tile_is_hit) = RayCasting::ray_cast(los, blocs);
+        if tile_is_hit {
+            is_hit = true;
+            min_d = RayCasting::get_distance(tile_shot.0, tile_shot.1);
+            new_los = (
+                glam::Vec2::new(los.0.x, los.0.y),
+                glam::Vec2::new(tile_shot.1.x, tile_shot.1.y),
+            );
+            hit_type = RayCastBlocType::Bloc(tile_index.unwrap());
+        }
+        let (player_shot, player_index, player_is_hit) = RayCasting::ray_cast(tile_shot, players);
+        if player_is_hit {
+            is_hit = true;
+            let d = RayCasting::get_distance(player_shot.0, player_shot.1);
+            if d < min_d {
+                // the if bot is closes to the player than the tile
+                min_d = d;
+                hit_type = RayCastBlocType::Player(player_index.unwrap());
+                new_los = (
+                    glam::Vec2::new(los.0.x, los.0.y),
+                    glam::Vec2::new(player_shot.1.x, player_shot.1.y),
+                );
+            }
+        };
+        if is_hit {
+            let result = RayCastResult::Ok(new_los, hit_type, min_d);
+            result
+        } else {
+            let result = RayCastResult::Fail;
+            result
+        }
     }
 }
+
+// impl RotatedHitbox {
+//     pub fn new(r: ggez::graphics::Rect, angle: f32) -> Self {
+//         // rotate_square(r, angle)
+//         RotatedHitbox {
+//             p1: glam::Vec2::new(0., 0.),
+//             p2: glam::Vec2::new(0., 0.),
+//             p3: glam::Vec2::new(0., 0.),
+//             p4: glam::Vec2::new(0., 0.),
+//         }
+//     }
+
+//     pub fn to_vec(&self) -> Vec<glam::Vec2> {
+//         vec![self.p1, self.p2, self.p3, self.p4]
+//     }
+// }
