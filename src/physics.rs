@@ -1,4 +1,5 @@
 use ggez;
+use ggez::mint;
 use glam;
 
 use crate::{bloc, monster, player};
@@ -32,9 +33,48 @@ pub struct LOS {
     pub end_point: glam::Vec2,
     pub result: RayCastResult,
 }
-pub struct Point2 {
-    x: f32,
-    y: f32,
+
+#[derive(Debug, Clone, Copy)]
+pub struct Pos2D<T> {
+    pub x: T,
+    pub y: T,
+}
+impl Default for Pos2D<f32> {
+    fn default() -> Self {
+        Self {
+            x: 0.0,
+            y: 0.0,
+        }
+    }
+}
+impl Default for Pos2D<i32> {
+    fn default() -> Self {
+        Self {
+            x: 0,
+            y: 0,
+        }
+    }
+}
+impl<T> From<mint::Point2<T>> for Pos2D<T> {
+    fn from(p: mint::Point2<T>) -> Self {
+        Self {
+            x: p.x,
+            y: p.y,
+        }
+    }
+}
+impl<T> From<Pos2D<T>> for mint::Point2<T> {
+    fn from(p: Pos2D<T>) -> Self {
+        Self {
+            x: p.x,
+            y: p.y,
+        }
+    }
+}
+impl From<Pos2D<f32>> for glam::Vec2 {
+    fn from(p: Pos2D<f32>) -> Self {
+        glam::Vec2::new(p.x, p.y)
+    }
 }
 
 // pub struct RotatedHitbox {

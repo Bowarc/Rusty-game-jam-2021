@@ -46,7 +46,6 @@ impl Player {
     }
     pub fn update_los(
         &mut self,
-        mouse_pos: ggez::mint::Point2<f32>,
         camera_scroll: glam::Vec2,
         bloclist: &mut Vec<bloc::Bloc>,
         monster_list: &mut Vec<monster::Monster>,
@@ -56,7 +55,7 @@ impl Player {
             -camera_scroll.x + self.hitbox.center().x,
             -camera_scroll.y + self.hitbox.center().y,
         );
-        self.los.angle = (mouse_pos.y - hitbox_center.1).atan2(mouse_pos.x - hitbox_center.0);
+        self.los.angle = (self.inputs.pointing.y - hitbox_center.1).atan2(self.inputs.pointing.x - hitbox_center.0);
 
         let weapon_range = 500.;
 
@@ -90,6 +89,21 @@ impl Player {
     pub fn draw(&self, ctx: &mut ggez::Context, draw_offset: glam::Vec2) -> ggez::GameResult {
         let player_center =
             glam::Vec2::new(self.hitbox.center().x, self.hitbox.center().y) + draw_offset;
+
+        // Used to see the orientation, code from from Heto's game
+        let mut gunmesh = ggez::graphics::MeshBuilder::new();
+
+        let gun_rect =
+            ggez::graphics::Rect::new(self.hitbox.w / 2.0 - 10., self.hitbox.h / 2.0, 30.0, 10.0);
+
+        gunmesh.rectangle(ggez::graphics::DrawMode::stroke(1.0), gun_rect, ggez::graphics::Color::WHITE)?;
+        let builded_gunmesh = gunmesh.build(ctx)?;
+        ggez::graphics::draw(
+            ctx,
+            &builded_gunmesh,
+            (player_center, self.los.angle, ggez::graphics::Color::WHITE),
+        )?;
+        // End of debug code
 
         let mut hitbox_mesh = ggez::graphics::MeshBuilder::new();
         hitbox_mesh.rectangle(

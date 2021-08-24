@@ -10,6 +10,7 @@ mod physics;
 mod player;
 
 const GAMEPAD_DEAD_ZONE: f32 = 0.5;
+const GAMEPAD_SPEED: f32 = 400.;
 
 struct Game {
     map: map::Map,
@@ -51,10 +52,25 @@ impl Game {
 impl ggez::event::EventHandler<ggez::GameError> for Game {
     fn update(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult {
         let dt = ggez::timer::delta(ctx).as_secs_f32();
-        let mouse_pos = ggez::input::mouse::position(ctx);
+
+        // Update mouse/gamepad position
+        if self.player.inputs.gamepad {
+            match self.player.inputs.rightpad.x {
+                1 => {self.player.inputs.pointing.x += GAMEPAD_SPEED},
+                -1 => {self.player.inputs.pointing.x -= GAMEPAD_SPEED},
+                _ => {},
+            }
+            match self.player.inputs.rightpad.y {
+                1 => {self.player.inputs.pointing.y += GAMEPAD_SPEED},
+                -1 => {self.player.inputs.pointing.y -= GAMEPAD_SPEED},
+                _ => {},
+            }
+        }
+        println!("{:#?}", self.player.inputs.pointing);
+
+        // Update player
         self.player.update_movements(&mut self.map.bloc_list, dt);
         self.player.update_los(
-            mouse_pos,
             self.camera.scroll,
             &mut self.map.bloc_list,
             &mut self.monster_list,
@@ -155,11 +171,13 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
     fn mouse_motion_event(
         &mut self,
         _ctx: &mut ggez::Context,
-        _x: f32,
-        _y: f32,
+        x: f32,
+        y: f32,
         _dx: f32,
         _dy: f32,
     ) {
+        self.player.inputs.pointing = physics::Pos2D {x: x, y: y};
+        self.player.inputs.gamepad = false;
     }
 
     fn mouse_wheel_event(&mut self, _ctx: &mut ggez::Context, _x: f32, _y: f32) {}
@@ -190,48 +208,63 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
         value: f32,
         _id: ggez::input::gamepad::GamepadId,
     ) {
-        if axis == ggez::event::Axis::LeftStickY {
-            if value >= GAMEPAD_DEAD_ZONE {
-                self.player.inputs.down = false;
-                self.player.inputs.up = true;
+        self.player.inputs.gamepad = true;
+        match axis {
+            ggez::event::Axis::LeftStickY => {
+                if value >= GAMEPAD_DEAD_ZONE {
+                    self.player.inputs.down = false;
+                    self.player.inputs.up = true;
+                }
+                else if value <= -GAMEPAD_DEAD_ZONE {
+                    self.player.inputs.up = false;
+                    self.player.inputs.down = true;
+                }
+                else {
+                    self.player.inputs.up = false;
+                    self.player.inputs.down = false;
+                }
+            },
+            ggez::event::Axis::LeftStickX => {
+                if value >= GAMEPAD_DEAD_ZONE {
+                    self.player.inputs.left = false;
+                    self.player.inputs.right = true;
+                }
+                else if value <= -GAMEPAD_DEAD_ZONE {
+                    self.player.inputs.right = false;
+                    self.player.inputs.left = true;
+                }
+                else {
+                    self.player.inputs.right = false;
+                    self.player.inputs.left = false;
+                }
+            },
+            ggez::event::Axis::RightStickX => {
+                if value >= GAMEPAD_DEAD_ZONE {
+                    self.player.inputs.rightpad.x = 1;
+                }
+                else if value <= -GAMEPAD_DEAD_ZONE {
+                    self.player.inputs.rightpad.x = -1;
+                }
+                else {
+                    self.player.inputs.rightpad.x = 0;
+                }
+            },
+            ggez::event::Axis::RightStickY => {
+                if value >= GAMEPAD_DEAD_ZONE {
+                    self.player.inputs.rightpad.y = -1;
+                }
+                else if value <= -GAMEPAD_DEAD_ZONE {
+                    self.player.inputs.rightpad.y = 1;
+                }
+                else {
+                    self.player.inputs.rightpad.y = 0;
+                }
             }
-            else if value <= -GAMEPAD_DEAD_ZONE {
-                self.player.inputs.up = false;
-                self.player.inputs.down = true;
-            }
-            else {
-                self.player.inputs.up = false;
-                self.player.inputs.down = false;
-            }
+            _ => {},
         }
-        if axis == ggez::event::Axis::LeftStickX {
-            if value >= GAMEPAD_DEAD_ZONE {
-                self.player.inputs.left = false;
-                self.player.inputs.right = true;
-            }
-            else if value <= -GAMEPAD_DEAD_ZONE {
-                self.player.inputs.right = false;
-                self.player.inputs.left = true;
-            }
-            else {
-                self.player.inputs.right = false;
-                self.player.inputs.left = false;
-            }
-        }
-        println!("ctx: {:#?}\naxis: {:#?}\nvalue: {:#?}\nid: {:#?}\n", _ctx, axis, value, _id);
     }
 
-    fn focus_event(&mut self, ctx: &mut ggez::Context, gained: bool) {
-        if gained {
-            println!("Gained focus");
-            println!("-------------------------------");
-        } else {
-            println!("-------------------------------");
-            println!("Lost focus");
-            println!("FPS: {}", ggez::timer::fps(ctx));
-            // println!("Frame time: {:?}", ggez::timer::delta(ctx));
-        }
-    }
+    fn focus_event(&mut self, ctx: &mut ggez::Context, gained: bool) {}
 
     fn quit_event(&mut self, _ctx: &mut ggez::Context) -> bool {
         false
