@@ -221,7 +221,7 @@ fn main() -> ggez::GameResult {
             ggez::conf::WindowMode::default()
                 .dimensions(1920., 1080.)
                 .fullscreen_type(ggez::conf::FullscreenType::Desktop)
-                .resizable(false),
+                .resizable(true),
         );
     // maybe resource dir
 

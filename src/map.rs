@@ -25,7 +25,7 @@ pub struct Tile {
     pub angle: f32,
 }
 impl Map {
-    pub fn new(tile_size: f32, current_id: &mut i32) -> Self {
+    pub fn new(tile_size: f32, _current_id: &mut i32) -> Self {
         Map {
             map_title: "map title".to_string(),
             tile_size: tile_size,
@@ -54,6 +54,19 @@ impl Map {
         for i in map_file_data["ghost_tiles"].as_array().unwrap() {
             ghost_tiles.push(i.as_f64().unwrap() as f32);
         }
+
+        let mut tile_translate: HashMap<i32, String> = HashMap::new();
+        for translate in map_file_data["tile_translate"].as_object() {
+            for (key, value) in translate {
+                tile_translate.insert(
+                    key.parse::<i32>().unwrap(),
+                    serde_json::from_str(&value.to_string()).unwrap(),
+                );
+            }
+        }
+
+        let mut image_hashmap: HashMap<i32, ggez::graphics::spritebatch::SpriteBatch> =
+            HashMap::new();
 
         self.map_file_content =
             serde_json::from_str(&map_file_data["map_data"].to_string()).unwrap();
