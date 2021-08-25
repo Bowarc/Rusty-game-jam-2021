@@ -245,6 +245,7 @@ impl CheckCollision {
             let tile = match bloc {
                 bloc::Bloc::Air(a) => &a.tile,
                 bloc::Bloc::Wall(w) => &w.tile,
+                bloc::Bloc::Water(w) => &w.tile,
                 bloc::Bloc::Lava(l) => &l.tile,
             };
 

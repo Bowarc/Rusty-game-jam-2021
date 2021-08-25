@@ -32,7 +32,7 @@ impl Game {
 
         // load the map
         let mut map = map::Map::new(tile_size);
-        map.gen_new_map("game_jam_map_test_1".to_string(), ctx, id_manager)?;
+        map.gen_new_map(ctx, id_manager)?;
 
         // Create the player
         let player_spawn_pos = glam::Vec2::new(tile_size * 5., tile_size * 5.);
@@ -149,7 +149,7 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
             ggez::event::KeyCode::D => self.player.inputs.right = true,
             ggez::event::KeyCode::E => {
                 self.map.difficulty += 1;
-                self.map.gen_new_map(self.map.difficulty.to_string(), ctx, self.id_manager,
+                self.map.gen_new_map(ctx, self.id_manager,
             );
             },
             ggez::event::KeyCode::Escape => {

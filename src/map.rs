@@ -13,8 +13,6 @@ use noise::{
     Seedable,
 };
 
-const MAP_FILE: &str = "map_settings.json";
-
 pub struct Map {
     pub map_title: String,
     pub tile_size: f32,
@@ -37,7 +35,7 @@ pub struct Tile {
 impl Map {
     pub fn new(tile_size: f32) -> Self {
         Map {
-            map_title: "map title".to_string(),
+            map_title: String::new(),
             tile_size: tile_size,
             map_file_content: Vec::new(),
             bloc_list: Vec::new(),
@@ -52,21 +50,20 @@ impl Map {
 
     pub fn gen_new_map(
         &mut self,
-        map_name: String,
         ctx: &mut ggez::Context,
-        mut id_manager: id::IdManager,
+        id_manager: id::IdManager,
     ) -> ggez::GameResult {
         const MAP_WIDTH: usize = 100;
         const MAP_HEIGHT: usize = 100;
 
         let start_time = SystemTime::now();
-        println!("Loading map: {}", map_name);
+        println!("Loading map: {}", self.difficulty);
 
         let ghost_tiles: Vec<f32> = vec![-1., 10., 18., 19., 20., 21.];
         let tile_translate: HashMap<i32, String> = vec![
             (-1, "air".to_string()),
             (4, "wall".to_string()),
-            (10, "water".to_string()),
+            (9, "water".to_string()),
             (12, "crate".to_string()),
             (18, "lava".to_string()),/*
             (19, "pack".to_string()),
@@ -110,7 +107,7 @@ impl Map {
                 let level = noise_map.get_value(i, j);
                 if level <= -0.6 {
                     if self.difficulty >= 5 && self.difficulty < 20 {
-                        line[j] = 10;
+                        line[j] = 9;
                     }
                     else if self.difficulty >= 20 {
                         line[j] = 18;
@@ -119,9 +116,6 @@ impl Map {
                         line[j] = -1;
                     }
                 }
-                /*else if level > -0.6 && level <= -0.5 {
-                    line[j] = 18;
-                }*/
                 else if level > -0.6 && level <= 0.5 {
                     line[j] = -1;
                 }
@@ -140,7 +134,7 @@ impl Map {
         self.total_rows = MAP_HEIGHT as f32;
         self.total_cols = MAP_WIDTH as f32;
         self.diag_size = physics::get_diagonal_size(self.total_cols, self.total_rows, self.tile_size);
-        self.map_title = map_name;
+        self.map_title = self.difficulty.to_string();
         self.image_hashmap = image_hashmap;
         self.crate_tilemap(ghost_tiles, id_manager);
 
@@ -159,85 +153,6 @@ impl Map {
         Ok(())
     }
 
-    pub fn load_new_map(
-        &mut self,
-        map_name: String,
-        ctx: &mut ggez::Context,
-        mut id_manager: id::IdManager,
-    ) -> ggez::GameResult {
-        let start_time = SystemTime::now();
-
-        println!("Loading map: {}", map_name);
-
-        let map_file_path = format!("/maps/{}/{}", map_name, MAP_FILE);
-
-        let mut file = ggez::filesystem::open(ctx, map_file_path).unwrap();
-
-        let mut data = String::new();
-
-        file.read_to_string(&mut data).unwrap();
-
-        let map_file_data: Value = serde_json::from_str(&data).unwrap();
-
-        let mut ghost_tiles: Vec<f32> = vec![];
-        for i in map_file_data["ghost_tiles"].as_array().unwrap() {
-            ghost_tiles.push(i.as_f64().unwrap() as f32);
-        }
-
-        let mut tile_translate: HashMap<i32, String> = HashMap::new();
-        for translate in map_file_data["tile_translate"].as_object() {
-            for (key, value) in translate {
-                tile_translate.insert(
-                    key.parse::<i32>().unwrap(),
-                    serde_json::from_str(&value.to_string()).unwrap(),
-                );
-            }
-        }
-
-        let mut image_hashmap: HashMap<i32, ggez::graphics::spritebatch::SpriteBatch> =
-            HashMap::new();
-        for (key, value) in tile_translate.iter() {
-            if value != "air" {
-                let mut texture_file_name: String = value.to_string();
-                texture_file_name.push_str(".png");
-                let pth = format!("/maps/{}/tiles/{}", map_name, texture_file_name);
-                println!("Loading: '{}'", pth);
-                let image = ggez::graphics::Image::new(ctx, pth);
-                image_hashmap.insert(
-                    *key,
-                    ggez::graphics::spritebatch::SpriteBatch::new(image.clone().unwrap()),
-                );
-            } else {
-            }
-        }
-
-        self.map_file_content =
-            serde_json::from_str(&map_file_data["map_data"].to_string()).unwrap();
-        self.total_rows = map_file_data["config"]["rows"].as_i64().unwrap() as f32;
-        self.total_cols = map_file_data["config"]["cols"].as_i64().unwrap() as f32;
-        self.diag_size =
-            physics::get_diagonal_size(self.total_cols, self.total_rows, self.tile_size);
-        self.map_title = map_file_data["config"]["name"].to_string();
-        self.image_hashmap = image_hashmap;
-
-        self.crate_tilemap(ghost_tiles, id_manager);
-
-        match start_time.elapsed() {
-            Ok(elapsed) => {
-                println!(
-                    "Map: `{}` has been loaded in {} ms.",
-                    map_file_data["config"]["name"]
-                        .to_string()
-                        .replace(&['"'][..], ""),
-                    elapsed.as_millis()
-                );
-            }
-            Err(e) => {
-                println!("Error: {:?}", e);
-            }
-        }
-        Ok(())
-    }
     pub fn crate_tilemap(&mut self, transparent_tiles: Vec<f32>, mut id_manager: id::IdManager) {
         let mut bloclist: Vec<bloc::Bloc> = Vec::new();
 
@@ -263,6 +178,13 @@ impl Map {
                     4 => (
                         true,
                         Some(bloc::Bloc::Wall(bloc::Wall::new(
+                            id_manager.get_new_id(),
+                            tile,
+                        ))),
+                    ),
+                    9 => (
+                        true,
+                        Some(bloc::Bloc::Water(bloc::Water::new(
                             id_manager.get_new_id(),
                             tile,
                         ))),
@@ -314,6 +236,7 @@ impl Map {
             let tile = match bloc {
                 bloc::Bloc::Air(a) => &a.tile,
                 bloc::Bloc::Wall(w) => &w.tile,
+                bloc::Bloc::Water(w) => &w.tile,
                 bloc::Bloc::Lava(l) => &l.tile,
             };
 
@@ -355,6 +278,7 @@ impl Map {
             let tile = match bloc {
                 bloc::Bloc::Air(a) => &a.tile,
                 bloc::Bloc::Wall(w) => &w.tile,
+                bloc::Bloc::Water(w) => &w.tile,
                 bloc::Bloc::Lava(l) => &l.tile,
             };
 

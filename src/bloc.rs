@@ -15,6 +15,7 @@ use std;
 pub enum Bloc {
     Air(Air),
     Wall(Wall),
+    Water(Water),
     Lava(Lava),
 }
 
@@ -24,6 +25,10 @@ pub struct Air {
 }
 
 pub struct Wall {
+    pub id: i32,
+    pub tile: map::Tile,
+}
+pub struct Water {
     pub id: i32,
     pub tile: map::Tile,
 }
@@ -46,6 +51,13 @@ impl Wall {
         Wall { id: id, tile: tile }
     }
 }
+
+impl Water {
+    pub fn new(id: i32, tile: map::Tile) -> Self {
+        Self { id: id, tile: tile}
+    }
+}
+
 impl Lava {
     pub fn new(id: i32, tile: map::Tile) -> Self {
         Lava {
@@ -83,6 +95,7 @@ impl physics::EntityTrait for Bloc {
         match self {
             Bloc::Air(a) => a.tile.hitbox,
             Bloc::Wall(w) => w.tile.hitbox,
+            Bloc::Water(w) => w.tile.hitbox,
             Bloc::Lava(l) => l.tile.hitbox,
         }
     }
@@ -90,6 +103,7 @@ impl physics::EntityTrait for Bloc {
         match self {
             Bloc::Air(a) => a.tile.angle,
             Bloc::Wall(w) => w.tile.angle,
+            Bloc::Water(w) => w.tile.angle,
             Bloc::Lava(l) => l.tile.angle,
         }
     }
@@ -97,6 +111,7 @@ impl physics::EntityTrait for Bloc {
         match self {
             Bloc::Air(a) => a.tile.transparent,
             Bloc::Wall(w) => w.tile.transparent,
+            Bloc::Water(w) => w.tile.transparent,
             Bloc::Lava(l) => l.tile.transparent,
         }
     }
@@ -104,6 +119,7 @@ impl physics::EntityTrait for Bloc {
         match self {
             Bloc::Air(a) => physics::rotate_square(a.tile.hitbox, a.tile.angle),
             Bloc::Wall(w) => physics::rotate_square(w.tile.hitbox, w.tile.angle),
+            Bloc::Water(w) => physics::rotate_square(w.tile.hitbox, w.tile.angle),
             Bloc::Lava(l) => physics::rotate_square(l.tile.hitbox, l.tile.angle),
         }
     }
@@ -111,6 +127,7 @@ impl physics::EntityTrait for Bloc {
         match self {
             Bloc::Air(a) => a.id,
             Bloc::Wall(w) => w.id,
+            Bloc::Water(w) => w.id,
             Bloc::Lava(l) => l.id,
         }
     }
