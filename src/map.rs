@@ -9,7 +9,8 @@ use noise::{
         NoiseMapBuilder,
         PlaneMapBuilder
     },
-    SuperSimplex
+    SuperSimplex,
+    Seedable,
 };
 
 const MAP_FILE: &str = "map_settings.json";
@@ -87,7 +88,7 @@ impl Map {
             }
         }
 
-        let simplex = SuperSimplex::default();
+        let simplex = SuperSimplex::default().set_seed(rand::random::<u32>());
 
         let noise_map = PlaneMapBuilder::new(&simplex)
             .set_size(MAP_WIDTH, MAP_HEIGHT)
@@ -97,9 +98,13 @@ impl Map {
 
         let mut map = Box::new([[0; MAP_WIDTH]; MAP_HEIGHT]);
         let mut line = [0; MAP_WIDTH];
+        map[0] = [4; MAP_HEIGHT];
+        map[MAP_HEIGHT - 1] = [4; MAP_HEIGHT];
 
-        for i in 0..MAP_HEIGHT {
-            for j in 0..MAP_WIDTH {
+        for i in 1..MAP_HEIGHT - 1 {
+            for j in 1..MAP_WIDTH - 1 {
+                line[0] = 4;
+                line[MAP_WIDTH - 1] = 4;
                 let level = noise_map.get_value(i, j);
                 if level <= -0.6 {
                     line[j] = 10;
