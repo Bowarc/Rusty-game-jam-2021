@@ -99,6 +99,10 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
                 &mut self.monster_manager.monster_list,
             );
 
+            // Update the monsters
+            self.monster_manager.update();
+
+            // Update the camera
             self.camera.set_focus(
                 (
                     self.player.hitbox.x + (self.player.hitbox.w / 2.),
@@ -117,7 +121,7 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
         ggez::graphics::clear(ctx, ggez::graphics::Color::BLACK);
         let draw_offset = glam::Vec2::new(-self.camera.scroll.x, -self.camera.scroll.y);
         self.map.draw(ctx, draw_offset)?;
-        self.monster_manager.draw_bots(ctx, draw_offset)?;
+        self.monster_manager.draw_monsters(ctx, draw_offset)?;
         self.player.draw(ctx, draw_offset)?;
         if self.menu.show_main || self.menu.show_settings {
             self.menu.draw(ctx, draw_offset)?;
@@ -167,7 +171,6 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
             ggez::event::KeyCode::S => self.player.inputs.down = false,
             ggez::event::KeyCode::Q => self.player.inputs.left = false,
             ggez::event::KeyCode::D => self.player.inputs.right = false,
-
             _ => (),
         }
     }
@@ -230,6 +233,7 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
         _btn: ggez::event::Button,
         _id: ggez::input::gamepad::GamepadId,
     ) {
+        println!("{:?}, {:?}", _btn, _id);
     }
 
     fn gamepad_axis_event(

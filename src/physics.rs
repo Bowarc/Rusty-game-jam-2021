@@ -80,9 +80,10 @@ impl From<Pos2D<f32>> for glam::Vec2 {
 //     p4: glam::Vec2,
 // }
 
+#[derive(Clone, Copy)]
 pub struct Circle {
-    center: glam::Vec2,
-    radius: f32,
+    pub center: glam::Vec2,
+    pub radius: f32,
 }
 
 pub fn get_diagonal_size(w: f32, h: f32, ts: f32) -> f32 {
@@ -194,21 +195,25 @@ impl CheckCollision {
                     - (line.0.y - line.1.y) * (point.y - q.y)),
         )
     }
-    pub fn point_in_circle(point: glam::Vec2, circle: Circle) -> CollisionResult {
+    pub fn point_in_circle(point: glam::Vec2, circle: Circle) -> bool {
+        //CollisionResult
         let dist_point_circle_center = RayCasting::get_distance(circle.center, point);
 
         if dist_point_circle_center > circle.radius {
             // The point is outside the circle
-            CollisionResult::Out
+            // CollisionResult::Out
+            false
         } else if dist_point_circle_center < circle.radius {
             // The point is in the circle
-            CollisionResult::In
+            // CollisionResult::In
+            true
         } else {
             // The point is on the circle ring
-            CollisionResult::Touch
+            // CollisionResult::Touch
+            true
         }
     }
-    pub fn line_cross_circle(line: (glam::Vec2, glam::Vec2), circle: Circle) -> CollisionResult {
+    pub fn line_cross_circle(line: (glam::Vec2, glam::Vec2), circle: Circle) -> bool {
         let closest_point = CheckCollision::get_closest_point(line, circle.center);
 
         let collision_result = CheckCollision::point_in_circle(closest_point, circle);
@@ -491,3 +496,12 @@ impl RayCasting {
 //         vec![self.p1, self.p2, self.p3, self.p4]
 //     }
 // }
+
+impl Circle {
+    pub fn new(pos: glam::Vec2, radius: f32) -> Self {
+        Circle {
+            center: pos,
+            radius: radius,
+        }
+    }
+}

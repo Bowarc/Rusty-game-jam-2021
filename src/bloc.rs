@@ -1,4 +1,4 @@
-use crate::{map, physics, player};
+use crate::{map, physics};
 use std;
 
 ///             TRANSLATE FOR MAP CREATION
@@ -10,8 +10,6 @@ use std;
 ///             19 => Heal pack
 ///             20 => Spawn point
 ///             21 => Level (depth) end point
-///
-///
 
 // #[derive(Debug)]
 pub enum Bloc {
