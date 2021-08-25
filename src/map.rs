@@ -4,6 +4,13 @@ use serde_json::Value; //Result
 use std::collections::HashMap;
 use std::io::Read;
 use std::time::SystemTime;
+use noise::{
+    utils::{
+        NoiseMapBuilder,
+        PlaneMapBuilder
+    },
+    SuperSimplex
+};
 
 const MAP_FILE: &str = "map_settings.json";
 
@@ -40,6 +47,100 @@ impl Map {
         }
     }
 
+    pub fn gen_new_map(
+        &mut self,
+        map_name: String,
+        ctx: &mut ggez::Context,
+        mut id_manager: id::IdManager,
+    ) -> ggez::GameResult {
+        const MAP_WIDTH: usize = 100;
+        const MAP_HEIGHT: usize = 100;
+
+        let start_time = SystemTime::now();
+        println!("Loading map: {}", map_name);
+
+        let ghost_tiles: Vec<f32> = vec![-1., 10., 18., 19., 20., 21.];
+        let tile_translate: HashMap<i32, String> = vec![
+            (-1, "air".to_string()),
+            (4, "wall".to_string()),
+            (10, "water".to_string())/*,
+            (12, "crate".to_string()),
+            (18, "lava".to_string()),
+            (19, "pack".to_string()),
+            (20, "spawn".to_string()),
+            (21, "end".to_string())*/
+        ].into_iter().collect();
+
+        let mut image_hashmap: HashMap<i32, ggez::graphics::spritebatch::SpriteBatch> =
+            HashMap::new();
+        for (key, value) in tile_translate.iter() {
+            if value != "air" {
+                let mut texture_file_name: String = value.to_string();
+                texture_file_name.push_str(".png");
+                let pth = format!("/maps/{}/tiles/{}", map_name, texture_file_name);
+                println!("Loading: '{}'", pth);
+                let image = ggez::graphics::Image::new(ctx, pth);
+                image_hashmap.insert(
+                    *key,
+                    ggez::graphics::spritebatch::SpriteBatch::new(image.clone().unwrap()),
+                );
+            }
+        }
+
+        let simplex = SuperSimplex::default();
+
+        let noise_map = PlaneMapBuilder::new(&simplex)
+            .set_size(MAP_WIDTH, MAP_HEIGHT)
+            .set_x_bounds(-5.0, 5.0)
+            .set_y_bounds(-5.0, 5.0)
+            .build();
+
+        let mut map = Box::new([[0; MAP_WIDTH]; MAP_HEIGHT]);
+        let mut line = [0; MAP_WIDTH];
+
+        for i in 0..MAP_HEIGHT {
+            for j in 0..MAP_WIDTH {
+                let level = noise_map.get_value(i, j);
+                if level <= -0.6 {
+                    line[j] = 10;
+                }
+                else if level > -0.6 &&  level <= 0.5 {
+                    line[j] = -1;
+                }
+                else {
+                    line[j] = 4;
+                }
+            map[i] = line;
+            }
+        }
+        let mut map_vec: Vec<Vec<i32>> = Vec::new();
+        for i in 0..MAP_HEIGHT {
+            map_vec.push(map[i].to_vec());
+        }
+
+        self.map_file_content = map_vec;
+        self.total_rows = MAP_HEIGHT as f32;
+        self.total_cols = MAP_WIDTH as f32;
+        self.diag_size = physics::get_diagonal_size(self.total_cols, self.total_rows, self.tile_size);
+        self.map_title = map_name;
+        self.image_hashmap = image_hashmap;
+        self.crate_tilemap(ghost_tiles, id_manager);
+
+        match start_time.elapsed() {
+            Ok(elapsed) => {
+                println!(
+                    "Map: `{}` has been loaded in {} ms.",
+                    self.map_title,
+                    elapsed.as_millis()
+                );
+            }
+            Err(e) => {
+                println!("Error: {:?}", e);
+            }
+        }
+        Ok(())
+    }
+
     pub fn load_new_map(
         &mut self,
         map_name: String,
@@ -51,7 +152,7 @@ impl Map {
         println!("Loading map: {}", map_name);
 
         let map_file_path = format!("/maps/{}/{}", map_name, MAP_FILE);
-        // let mut file = ggezfs::open(ctx, format!("/maps/{}/{}", map_name, MAP_FILE_NAME)).unwrap();
+
         let mut file = ggez::filesystem::open(ctx, map_file_path).unwrap();
 
         let mut data = String::new();
