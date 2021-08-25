@@ -100,7 +100,8 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
             );
 
             // Update the monsters
-            self.monster_manager.update();
+            self.monster_manager
+                .update(glam::Vec2::from(self.player.hitbox.center()));
 
             // Update the camera
             self.camera.set_focus(
