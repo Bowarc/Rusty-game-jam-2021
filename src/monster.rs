@@ -44,62 +44,50 @@ impl Brain {
         }
     }
     pub fn update(&mut self, entity_pos: glam::Vec2, entity_angle: f32) {
-        let usable_angle = entity_angle.to_degrees();
+        let usable_angle = entity_angle.to_degrees() + 50.;
 
         self.vision_cone = (
-            usable_angle - (VISION_CONE * 2.),
-            usable_angle + (VISION_CONE * 2.),
+            usable_angle - (VISION_CONE / 2.),
+            usable_angle + (VISION_CONE / 2.),
         );
 
         self.close_vision_circle = physics::Circle::new(entity_pos, self.iq as f32);
 
         self.large_vision_circle = physics::Circle::new(entity_pos, (self.iq * 3) as f32);
     }
-    pub fn can_see(
-        &mut self,
-        entity_pos: glam::Vec2,
-        entity_angle: f32,
-        point: glam::Vec2,
-    ) -> bool {
+    pub fn can_see(&mut self, entity_pos: glam::Vec2, point: glam::Vec2) -> bool {
         //  Generate the view area
         //  https://cdn.discordapp.com/attachments/406461353537175573/880003880681869342/unknown.png
-        self.update(entity_pos, entity_angle);
+        //
 
         let mut result = false;
         if physics::CheckCollision::point_in_circle(point, self.close_vision_circle) {
             // In the little circle
-            // println!("I SEE YOUUUU");
             result = true;
             // return true;
         }
         if !result {
             if physics::CheckCollision::point_in_circle(point, self.large_vision_circle) {
-                let angle_entity_point = physics::RayCasting::get_distance(entity_pos, point);
-                // if angle_entity_point < self.vision_cone.1
-                //     || angle_entity_point > self.vision_cone.0
-                // {
-                if self.vision_cone.1 < angle_entity_point
-                    && angle_entity_point < self.vision_cone.0
-                {
-                    // println!("I SEE YOUUUU");
+                let angle_entity_point = physics::two_points_angle(point, entity_pos).to_degrees();
+
+                let condition2 = self.vision_cone.0 < angle_entity_point
+                    && angle_entity_point < self.vision_cone.1;
+                if condition2 {
                     // In the vision cone
                     result = true;
-                    // return true;
                 } else {
                     // Not in the vision cone
-                    result = false
-                    // return false;
+                    result = false;
                 }
             } else {
                 // Not in the outside circle
                 result = false
-                // return false;
             }
         }
         if result {
-            //println!("I SEE YOUUUU");
+            println!("I SEE YOUUUU");
         } else {
-            //println!("WHEEERREE AAARRREE YOUUUUU");
+            println!("WHEEERREE AAARRREE YOUUUUU");
         }
         result
     }
@@ -146,6 +134,7 @@ impl MonsterManager {
         let mut vision_circles_mesh = ggez::graphics::MeshBuilder::new();
 
         for i in 0..self.monster_list.len() {
+            let monster_hitbox = physics::EntityTrait::get_hitbox(&self.monster_list[i]);
             let hitbox_lines = physics::rotate_square(
                 physics::EntityTrait::get_hitbox(&self.monster_list[i]),
                 physics::EntityTrait::get_angle(&self.monster_list[i]),
@@ -155,11 +144,41 @@ impl MonsterManager {
                 &hitbox_lines,
                 ggez::graphics::Color::WHITE,
             )?;
-            let (close_circle, large_circle) = match &self.monster_list[i] {
-                Monster::TestBot(tb) => {
-                    (tb.brain.close_vision_circle, tb.brain.large_vision_circle)
-                }
+            let (close_circle, large_circle, vision_cone, iq) = match &self.monster_list[i] {
+                Monster::TestBot(tb) => (
+                    tb.brain.close_vision_circle,
+                    tb.brain.large_vision_circle,
+                    tb.brain.vision_cone,
+                    tb.brain.iq,
+                ),
             };
+
+            let cone_0_endpoint_r: glam::Vec2 = physics::rotate_line(
+                glam::Vec2::from(monster_hitbox.center()),
+                glam::Vec2::new(
+                    monster_hitbox.x + iq as f32 * 3. + monster_hitbox.w / 2.,
+                    monster_hitbox.y + monster_hitbox.h / 2.,
+                ),
+                vision_cone.0.to_radians(),
+            );
+
+            let cone_1_endpoint_r: glam::Vec2 = physics::rotate_line(
+                glam::Vec2::from(monster_hitbox.center()),
+                glam::Vec2::new(
+                    monster_hitbox.x + iq as f32 * 3. + monster_hitbox.w / 2.,
+                    monster_hitbox.y + monster_hitbox.h / 2.,
+                ),
+                vision_cone.1.to_radians(),
+            );
+            let test_line: glam::Vec2 = physics::rotate_line(
+                glam::Vec2::from(monster_hitbox.center()),
+                glam::Vec2::new(
+                    monster_hitbox.x + iq as f32 * 3. + monster_hitbox.w / 2.,
+                    monster_hitbox.y + monster_hitbox.h / 2.,
+                ),
+                0.,
+            );
+
             vision_circles_mesh.circle(
                 ggez::graphics::DrawMode::stroke(2.),
                 close_circle.center,
@@ -172,6 +191,22 @@ impl MonsterManager {
                 large_circle.center,
                 large_circle.radius,
                 0.1,
+                ggez::graphics::Color::WHITE,
+            )?;
+            vision_circles_mesh.line(
+                &[glam::Vec2::from(monster_hitbox.center()), cone_0_endpoint_r],
+                1.,
+                ggez::graphics::Color::WHITE,
+            )?;
+            vision_circles_mesh.line(
+                &[glam::Vec2::from(monster_hitbox.center()), cone_1_endpoint_r],
+                1.,
+                ggez::graphics::Color::WHITE,
+            )?;
+
+            vision_circles_mesh.line(
+                &[glam::Vec2::from(monster_hitbox.center()), test_line],
+                1.,
                 ggez::graphics::Color::WHITE,
             )?;
         }
@@ -221,11 +256,8 @@ impl TestBot {
     pub fn update(&mut self, player_pos: glam::Vec2) {
         self.brain
             .update(glam::Vec2::from(self.hitbox.center()), self.los.angle);
-        self.brain.can_see(
-            glam::Vec2::from(self.hitbox.center()),
-            self.los.angle,
-            player_pos,
-        );
+        self.brain
+            .can_see(glam::Vec2::from(self.hitbox.center()), player_pos);
         // update(&mut self, entity_pos: glam::Vec2, entity_angle: f32)
     }
 }

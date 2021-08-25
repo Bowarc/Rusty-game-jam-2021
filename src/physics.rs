@@ -151,6 +151,9 @@ pub fn rotate_square(r: ggez::graphics::Rect, angle: f32) -> Vec<glam::Vec2> {
     // }
 }
 
+pub fn two_points_angle(p1: glam::Vec2, p2: glam::Vec2) -> f32 {
+    (p1.y - p2.y).atan2(p1.x - p2.x)
+}
 impl LOS {
     pub fn default() -> Self {
         LOS {

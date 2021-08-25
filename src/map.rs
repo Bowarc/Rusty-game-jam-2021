@@ -1,17 +1,13 @@
 use crate::{bloc, id, physics};
 use ggez;
+use noise::{
+    utils::{NoiseMapBuilder, PlaneMapBuilder},
+    Seedable, SuperSimplex,
+};
 use serde_json::Value; //Result
 use std::collections::HashMap;
 use std::io::Read;
 use std::time::SystemTime;
-use noise::{
-    utils::{
-        NoiseMapBuilder,
-        PlaneMapBuilder
-    },
-    SuperSimplex,
-    Seedable,
-};
 
 pub struct Map {
     pub map_title: String,
@@ -57,7 +53,9 @@ impl Map {
         const MAP_HEIGHT: usize = 100;
 
         let start_time = SystemTime::now();
-        println!("Loading map: {}", self.difficulty);
+
+        let map_name = format!("Stage: {}", self.difficulty);
+        println!("Loading map: {}", map_name);
 
         let ghost_tiles: Vec<f32> = vec![-1., 10., 18., 19., 20., 21.];
         let tile_translate: HashMap<i32, String> = vec![
@@ -65,11 +63,13 @@ impl Map {
             (4, "wall".to_string()),
             (9, "water".to_string()),
             (12, "crate".to_string()),
-            (18, "lava".to_string()),/*
-            (19, "pack".to_string()),
-            (20, "spawn".to_string()),
-            (21, "end".to_string())*/
-        ].into_iter().collect();
+            (18, "lava".to_string()), /*
+                                      (19, "pack".to_string()),
+                                      (20, "spawn".to_string()),
+                                      (21, "end".to_string())*/
+        ]
+        .into_iter()
+        .collect();
 
         let mut image_hashmap: HashMap<i32, ggez::graphics::spritebatch::SpriteBatch> =
             HashMap::new();
@@ -108,21 +108,17 @@ impl Map {
                 if level <= -0.6 {
                     if self.difficulty >= 5 && self.difficulty < 20 {
                         line[j] = 9;
-                    }
-                    else if self.difficulty >= 20 {
+                    } else if self.difficulty >= 20 {
                         line[j] = 18;
-                    }
-                    else {
+                    } else {
                         line[j] = -1;
                     }
-                }
-                else if level > -0.6 && level <= 0.5 {
+                } else if level > -0.6 && level <= 0.5 {
                     line[j] = -1;
-                }
-                else {
+                } else {
                     line[j] = 4;
                 }
-            map[i] = line;
+                map[i] = line;
             }
         }
         let mut map_vec: Vec<Vec<i32>> = Vec::new();
@@ -133,7 +129,8 @@ impl Map {
         self.map_file_content = map_vec;
         self.total_rows = MAP_HEIGHT as f32;
         self.total_cols = MAP_WIDTH as f32;
-        self.diag_size = physics::get_diagonal_size(self.total_cols, self.total_rows, self.tile_size);
+        self.diag_size =
+            physics::get_diagonal_size(self.total_cols, self.total_rows, self.tile_size);
         self.map_title = self.difficulty.to_string();
         self.image_hashmap = image_hashmap;
         self.crate_tilemap(ghost_tiles, id_manager);
@@ -142,7 +139,7 @@ impl Map {
             Ok(elapsed) => {
                 println!(
                     "Map: `{}` has been loaded in {} ms.",
-                    self.map_title,
+                    map_name,
                     elapsed.as_millis()
                 );
             }
