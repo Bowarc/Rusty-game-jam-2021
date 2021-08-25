@@ -1,6 +1,6 @@
 use ggez;
 
-use crate::{bloc, input, monster, physics};
+use crate::{bloc, id, input, monster, physics};
 
 const PLAYER_SPEED: f32 = 400.;
 pub struct Player {
@@ -13,9 +13,9 @@ pub struct Player {
 }
 
 impl Player {
-    pub fn new(x: f32, y: f32, w: f32, h: f32, id: &mut i32) -> Self {
+    pub fn new(x: f32, y: f32, w: f32, h: f32, mut id_manager: id::IdManager) -> Self {
         Player {
-            id: *id,
+            id: id_manager.get_new_id(),
             name: "bob".to_string(),
             hitbox: ggez::graphics::Rect::new(x, y, w, h),
             inputs: input::Input::default(),
@@ -135,6 +135,9 @@ impl Player {
 impl physics::EntityTrait for Player {
     fn get_hitbox(&self) -> ggez::graphics::Rect {
         self.hitbox
+    }
+    fn get_angle(&self) -> f32 {
+        self.los.angle
     }
     fn ray_cast_bypass(&self) -> bool {
         false

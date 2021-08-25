@@ -1,10 +1,11 @@
-pub struct ID_manager {
+#[derive(Clone, Copy)]
+pub struct IdManager {
     current_id: i32,
 }
 
-impl ID_manager {
+impl IdManager {
     pub fn new() -> Self {
-        ID_manager { current_id: 0 }
+        IdManager { current_id: 0 }
     }
     pub fn get_new_id(&mut self) -> i32 {
         self.current_id += 1;

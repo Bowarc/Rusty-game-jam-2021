@@ -35,6 +35,12 @@ impl physics::EntityTrait for Bloc {
             Bloc::Wall(w) => w.tile.hitbox,
         }
     }
+    fn get_angle(&self) -> f32 {
+        match self {
+            Bloc::Air(a) => a.tile.angle,
+            Bloc::Wall(w) => w.tile.angle,
+        }
+    }
     fn ray_cast_bypass(&self) -> bool {
         match self {
             Bloc::Air(a) => a.tile.transparent,

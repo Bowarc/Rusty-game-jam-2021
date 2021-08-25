@@ -27,7 +27,7 @@ pub struct Tile {
     pub angle: f32,
 }
 impl Map {
-    pub fn new(tile_size: f32, _current_id: &mut i32) -> Self {
+    pub fn new(tile_size: f32) -> Self {
         Map {
             map_title: "map title".to_string(),
             tile_size: tile_size,

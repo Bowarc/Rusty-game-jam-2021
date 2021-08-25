@@ -3,6 +3,7 @@ use glam;
 
 mod bloc;
 mod camera;
+mod id;
 mod input;
 mod map;
 mod menu;
@@ -16,7 +17,7 @@ const GAMEPAD_SPEED: f32 = 400.;
 struct Game {
     map: map::Map,
     player: player::Player,
-    monster_list: Vec<monster::Monster>,
+    monster_manager: monster::MonsterManager,
     camera: camera::Camera,
     window_size: glam::Vec2,
     menu: menu::Gui,
@@ -24,30 +25,40 @@ struct Game {
 
 impl Game {
     fn new(ctx: &mut ggez::Context) -> ggez::GameResult<Self> {
-        let mut id = 0;
+        let id_manager = id::IdManager::new();
         // set the tile size
         let tile_size = 60.;
 
         // load the map
-        let mut map = map::Map::new(tile_size, &mut id);
+        let mut map = map::Map::new(tile_size);
         map.load_new_map("game_jam_map_test_1".to_string(), ctx)?;
 
         // Create the player
         let player_spawn_pos = glam::Vec2::new(tile_size * 5., tile_size * 5.);
-        let player = player::Player::new(player_spawn_pos.x, player_spawn_pos.y, 25., 25., &mut 0);
+        let player =
+            player::Player::new(player_spawn_pos.x, player_spawn_pos.y, 25., 25., id_manager);
 
         // Create the camera
         let camera = camera::Camera::new(32., 18.);
 
-        // Create the monsters (empty for now)
-        let monster_list: Vec<monster::Monster> = Vec::new();
+        // Create the monsters
+        let mut monster_manager = monster::MonsterManager::new();
+        monster_manager.new_bot(
+            500.,
+            700.,
+            25.,
+            25.,
+            monster::MonsterType::TestBot,
+            id_manager,
+        );
 
+        // Create main menu
         let main_menu = menu::Gui::new();
 
         Ok(Game {
             map: map,
             player: player,
-            monster_list: monster_list,
+            monster_manager: monster_manager,
             camera: camera,
             window_size: glam::Vec2::ZERO,
             menu: main_menu,
@@ -85,7 +96,7 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
         self.player.update_los(
             self.camera.scroll,
             &mut self.map.bloc_list,
-            &mut self.monster_list,
+            &mut self.monster_manager.monster_list,
         );
 
         self.camera.set_focus(
@@ -104,6 +115,7 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
         ggez::graphics::clear(ctx, ggez::graphics::Color::BLACK);
         let draw_offset = glam::Vec2::new(-self.camera.scroll.x, -self.camera.scroll.y);
         self.map.draw(ctx, draw_offset)?;
+        self.monster_manager.draw_bots(ctx, draw_offset)?;
         self.player.draw(ctx, draw_offset)?;
         if self.menu.show_main || self.menu.show_settings {
             self.menu.draw(ctx, draw_offset)?;

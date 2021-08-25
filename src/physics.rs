@@ -6,6 +6,7 @@ use crate::{bloc, monster, player};
 
 pub trait EntityTrait {
     fn get_hitbox(&self) -> ggez::graphics::Rect;
+    fn get_angle(&self) -> f32;
     fn ray_cast_bypass(&self) -> bool;
     fn rotated_hitbox(&self) -> Vec<glam::Vec2>;
     fn id(&self) -> i32;
@@ -175,21 +176,21 @@ impl CheckCollision {
     }
 
     pub fn get_closest_point(line: (glam::Vec2, glam::Vec2), point: glam::Vec2) -> glam::Vec2 {
-        let lineA = line.0;
-        let lineB = line.1;
-        let a_to_b = (lineB.x - lineA.x, lineB.y - lineA.y);
+        let a_to_b = (line.1.x - line.0.x, line.1.y - line.0.y);
 
         let perpendicular = (-a_to_b.1, a_to_b.0);
 
         let q = glam::Vec2::new(point.x + perpendicular.0, point.y + perpendicular.1);
 
         glam::Vec2::new(
-            ((lineA.x * lineB.y - lineA.y * lineB.x) * (point.x - q.x)
-                - (lineA.x - lineB.x) * (point.x * q.y - point.y * q.x))
-                / ((lineA.x - lineB.x) * (point.y - q.y) - (lineA.y - lineB.y) * (point.y - q.y)),
-            ((lineA.x * lineB.y - lineA.y * lineB.x) * (point.y - q.y)
-                - (lineA.y - lineB.y) * (point.x * q.y - point.y * q.x))
-                / ((lineA.x - lineB.x) * (point.y - q.y) - (lineA.y - lineB.y) * (point.y - q.y)),
+            ((line.0.x * line.1.y - line.0.y * line.1.x) * (point.x - q.x)
+                - (line.0.x - line.1.x) * (point.x * q.y - point.y * q.x))
+                / ((line.0.x - line.1.x) * (point.y - q.y)
+                    - (line.0.y - line.1.y) * (point.y - q.y)),
+            ((line.0.x * line.1.y - line.0.y * line.1.x) * (point.y - q.y)
+                - (line.0.y - line.1.y) * (point.x * q.y - point.y * q.x))
+                / ((line.0.x - line.1.x) * (point.y - q.y)
+                    - (line.0.y - line.1.y) * (point.y - q.y)),
         )
     }
     pub fn point_in_circle(point: glam::Vec2, circle: Circle) -> CollisionResult {
