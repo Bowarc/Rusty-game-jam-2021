@@ -3,8 +3,11 @@ use ggez;
 use crate::{bloc, id, input, monster, physics};
 
 const PLAYER_SPEED: f32 = 400.;
+const PLAYER_BASE_HP: i32 = 100;
+
 pub struct Player {
     pub id: i32,
+    pub hp: i32,
     pub name: String,
     pub hitbox: ggez::graphics::Rect,
     pub inputs: input::Input,
@@ -16,6 +19,7 @@ impl Player {
     pub fn new(x: f32, y: f32, w: f32, h: f32, mut id_manager: id::IdManager) -> Self {
         Player {
             id: id_manager.get_new_id(),
+            hp: PLAYER_BASE_HP,
             name: "bob".to_string(),
             hitbox: ggez::graphics::Rect::new(x, y, w, h),
             inputs: input::Input::default(),
@@ -130,6 +134,12 @@ impl Player {
         )?;
         Ok(())
     }
+    pub fn take_damages(&mut self, damage: i32) {
+        self.hp -= damage;
+        if self.hp < 1 {
+            println!("Player is supposed to be dead");
+        }
+    }
 }
 
 impl physics::EntityTrait for Player {
@@ -147,5 +157,11 @@ impl physics::EntityTrait for Player {
     }
     fn id(&self) -> i32 {
         self.id
+    }
+    fn take_damage(&mut self, damage: i32) {
+        // match self {
+        //     Player(p) => p.take_damage(damage),
+        // }
+        self.take_damages(damage);
     }
 }

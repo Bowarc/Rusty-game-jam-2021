@@ -10,6 +10,7 @@ pub trait EntityTrait {
     fn ray_cast_bypass(&self) -> bool;
     fn rotated_hitbox(&self) -> Vec<glam::Vec2>;
     fn id(&self) -> i32;
+    fn take_damage(&mut self, damage: i32);
 }
 
 #[derive(Debug, Clone)]
@@ -239,6 +240,7 @@ impl CheckCollision {
             let tile = match bloc {
                 bloc::Bloc::Air(a) => &a.tile,
                 bloc::Bloc::Wall(w) => &w.tile,
+                bloc::Bloc::Lava(l) => &l.tile,
             };
 
             if !tile.transparent {

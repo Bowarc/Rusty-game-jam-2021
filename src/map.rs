@@ -1,5 +1,4 @@
-use crate::bloc;
-use crate::physics;
+use crate::{bloc, id, physics};
 use ggez;
 use serde_json::Value; //Result
 use std::collections::HashMap;
@@ -41,7 +40,12 @@ impl Map {
         }
     }
 
-    pub fn load_new_map(&mut self, map_name: String, ctx: &mut ggez::Context) -> ggez::GameResult {
+    pub fn load_new_map(
+        &mut self,
+        map_name: String,
+        ctx: &mut ggez::Context,
+        mut id_manager: id::IdManager,
+    ) -> ggez::GameResult {
         let start_time = SystemTime::now();
 
         println!("Loading map: {}", map_name);
@@ -97,7 +101,7 @@ impl Map {
         self.map_title = map_file_data["config"]["name"].to_string();
         self.image_hashmap = image_hashmap;
 
-        self.crate_tilemap(ghost_tiles);
+        self.crate_tilemap(ghost_tiles, id_manager);
 
         match start_time.elapsed() {
             Ok(elapsed) => {
@@ -115,7 +119,7 @@ impl Map {
         }
         Ok(())
     }
-    pub fn crate_tilemap(&mut self, transparent_tiles: Vec<f32>) {
+    pub fn crate_tilemap(&mut self, transparent_tiles: Vec<f32>, mut id_manager: id::IdManager) {
         let mut bloclist: Vec<bloc::Bloc> = Vec::new();
 
         for (y, row) in self.map_file_content.iter().enumerate() {
@@ -130,8 +134,27 @@ impl Map {
                 );
 
                 let (ok, new_bloc) = match material {
-                    -1 => (true, Some(bloc::Bloc::Air(bloc::Air::new(0, tile)))),
-                    4 => (true, Some(bloc::Bloc::Wall(bloc::Wall::new(0, tile)))),
+                    -1 => (
+                        true,
+                        Some(bloc::Bloc::Air(bloc::Air::new(
+                            id_manager.get_new_id(),
+                            tile,
+                        ))),
+                    ),
+                    4 => (
+                        true,
+                        Some(bloc::Bloc::Wall(bloc::Wall::new(
+                            id_manager.get_new_id(),
+                            tile,
+                        ))),
+                    ),
+                    18 => (
+                        true,
+                        Some(bloc::Bloc::Lava(bloc::Lava::new(
+                            id_manager.get_new_id(),
+                            tile,
+                        ))),
+                    ),
                     _ => (false, None),
                 };
 
@@ -172,6 +195,7 @@ impl Map {
             let tile = match bloc {
                 bloc::Bloc::Air(a) => &a.tile,
                 bloc::Bloc::Wall(w) => &w.tile,
+                bloc::Bloc::Lava(l) => &l.tile,
             };
 
             if tile.material == -1 {
@@ -212,6 +236,7 @@ impl Map {
             let tile = match bloc {
                 bloc::Bloc::Air(a) => &a.tile,
                 bloc::Bloc::Wall(w) => &w.tile,
+                bloc::Bloc::Lava(l) => &l.tile,
             };
 
             //  THIS IS TEMPORARY

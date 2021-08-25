@@ -1,5 +1,5 @@
-use ggez_egui::EguiBackend;
 use egui::Window;
+use ggez_egui::EguiBackend;
 
 #[derive(Default)]
 pub struct Gui {
@@ -7,6 +7,7 @@ pub struct Gui {
     pub scale: f32,
     pub show_main: bool,
     pub show_settings: bool,
+    pub freeze_game: bool,
 }
 
 impl Gui {
@@ -14,27 +15,28 @@ impl Gui {
         Self {
             show_main: true,
             scale: 2.0,
+            freeze_game: true,
             ..Default::default()
         }
     }
 
-    pub fn main_menu(
-        &mut self,
-        window_size: glam::Vec2,
-        ggez_ctx: &mut ggez::Context
-    ) {
+    pub fn main_menu(&mut self, window_size: glam::Vec2, ggez_ctx: &mut ggez::Context) {
         let egui_ctx = self.egui_backend.get_context();
-        self.egui_backend.input.set_scale_factor(self.scale, window_size.into());
+        self.egui_backend
+            .input
+            .set_scale_factor(self.scale, window_size.into());
         egui::Window::new("Main menu")
             .anchor(egui::Align2::CENTER_CENTER, egui::Vec2::new(0., 0.))
             .show(&egui_ctx, |ui| {
                 if ui.button("play").clicked() {
                     self.show_main = false;
                     self.show_settings = false;
+                    self.freeze_game = false;
                 }
                 if ui.button("settings").clicked() {
                     self.show_settings = true;
                     self.show_main = false;
+                    self.freeze_game = true
                 }
                 if ui.button("quit").clicked() {
                     ggez::event::quit(ggez_ctx);
@@ -61,6 +63,7 @@ impl Gui {
                 if ui.button("Back").clicked() {
                     self.show_settings = false;
                     self.show_main = true;
+                    self.freeze_game = true;
                 }
             });
     }

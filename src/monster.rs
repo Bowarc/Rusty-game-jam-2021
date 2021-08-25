@@ -18,6 +18,7 @@ pub struct MonsterManager {
 pub struct TestBot {
     pub id: i32,
     pub name: String,
+    pub hp: i32,
     pub hitbox: ggez::graphics::Rect,
     pub speed: f32,
     pub los: physics::LOS,
@@ -77,10 +78,17 @@ impl TestBot {
     pub fn new(x: f32, y: f32, w: f32, h: f32, id: i32) -> Self {
         TestBot {
             id: id,
+            hp: 100,
             name: "monster_name".to_string(),
             hitbox: ggez::graphics::Rect::new(x, y, w, h),
             speed: TEST_BOT_SPEED,
             los: physics::LOS::default(),
+        }
+    }
+    pub fn take_damages(&mut self, damage: i32) {
+        self.hp -= damage;
+        if self.hp < 1 {
+            println!("TestBot with id: {id} should be dead", id = self.id);
         }
     }
 }
@@ -109,6 +117,11 @@ impl physics::EntityTrait for Monster {
     fn id(&self) -> i32 {
         match self {
             Monster::TestBot(tb) => tb.id,
+        }
+    }
+    fn take_damage(&mut self, damage: i32) {
+        match self {
+            Monster::TestBot(tb) => tb.take_damages(damage),
         }
     }
 }

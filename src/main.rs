@@ -31,7 +31,7 @@ impl Game {
 
         // load the map
         let mut map = map::Map::new(tile_size);
-        map.load_new_map("game_jam_map_test_1".to_string(), ctx)?;
+        map.load_new_map("game_jam_map_test_1".to_string(), ctx, id_manager)?;
 
         // Create the player
         let player_spawn_pos = glam::Vec2::new(tile_size * 5., tile_size * 5.);
@@ -67,22 +67,6 @@ impl Game {
 }
 impl ggez::event::EventHandler<ggez::GameError> for Game {
     fn update(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult {
-        let dt = ggez::timer::delta(ctx).as_secs_f32();
-
-        // Update mouse/gamepad position
-        if self.player.inputs.gamepad {
-            match self.player.inputs.rightpad.x {
-                1 => self.player.inputs.pointing.x += GAMEPAD_SPEED,
-                -1 => self.player.inputs.pointing.x -= GAMEPAD_SPEED,
-                _ => {}
-            }
-            match self.player.inputs.rightpad.y {
-                1 => self.player.inputs.pointing.y += GAMEPAD_SPEED,
-                -1 => self.player.inputs.pointing.y -= GAMEPAD_SPEED,
-                _ => {}
-            }
-        }
-
         // Update menu
         if self.menu.show_main {
             self.menu.main_menu(self.window_size, ctx);
@@ -90,24 +74,42 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
         if self.menu.show_settings {
             self.menu.settings_menu(self.window_size);
         }
+        if !self.menu.freeze_game {
+            let dt = ggez::timer::delta(ctx).as_secs_f32();
 
-        // Update player
-        self.player.update_movements(&mut self.map.bloc_list, dt);
-        self.player.update_los(
-            self.camera.scroll,
-            &mut self.map.bloc_list,
-            &mut self.monster_manager.monster_list,
-        );
+            // Update mouse/gamepad position
+            if self.player.inputs.gamepad {
+                match self.player.inputs.rightpad.x {
+                    1 => self.player.inputs.pointing.x += GAMEPAD_SPEED,
+                    -1 => self.player.inputs.pointing.x -= GAMEPAD_SPEED,
+                    _ => {}
+                }
+                match self.player.inputs.rightpad.y {
+                    1 => self.player.inputs.pointing.y += GAMEPAD_SPEED,
+                    -1 => self.player.inputs.pointing.y -= GAMEPAD_SPEED,
+                    _ => {}
+                }
+            }
 
-        self.camera.set_focus(
-            (
-                self.player.hitbox.x + (self.player.hitbox.w / 2.),
-                self.player.hitbox.y + (self.player.hitbox.h / 2.),
-            ),
-            (self.window_size.x, self.window_size.y),
-            (self.map.total_rows, self.map.total_cols),
-            self.map.tile_size,
-        );
+            // Update player
+            self.player.update_movements(&mut self.map.bloc_list, dt);
+            self.player.update_los(
+                self.camera.scroll,
+                &mut self.map.bloc_list,
+                &mut self.monster_manager.monster_list,
+            );
+
+            self.camera.set_focus(
+                (
+                    self.player.hitbox.x + (self.player.hitbox.w / 2.),
+                    self.player.hitbox.y + (self.player.hitbox.h / 2.),
+                ),
+                (self.window_size.x, self.window_size.y),
+                (self.map.total_rows, self.map.total_cols),
+                self.map.tile_size,
+            );
+        }
+
         Ok(())
     }
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult {
@@ -132,6 +134,7 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
         _repeat: bool,
     ) {
         self.menu.egui_backend.input.key_down_event(keycode, keymod);
+
         match keycode {
             ggez::event::KeyCode::Z => self.player.inputs.up = true,
             ggez::event::KeyCode::S => self.player.inputs.down = true,
@@ -139,12 +142,15 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
             ggez::event::KeyCode::D => self.player.inputs.right = true,
             ggez::event::KeyCode::Escape => {
                 if !self.menu.show_main && !self.menu.show_settings {
-                    self.menu.show_main = true
+                    self.menu.show_main = true;
+                    self.menu.freeze_game = true
                 } else if self.menu.show_settings {
                     self.menu.show_settings = false;
-                    self.menu.show_main = true
+                    self.menu.show_main = true;
+                    self.menu.freeze_game = true
                 } else if self.menu.show_main {
-                    self.menu.show_main = true
+                    self.menu.show_main = true;
+                    self.menu.freeze_game = true
                 }
             }
             _ => (),
@@ -189,20 +195,8 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
     ) {
         self.menu.egui_backend.input.mouse_button_up_event(button);
         match button {
-            ggez::input::mouse::MouseButton::Left => {
-                // self
-                //     .player
-                //     .inputs
-                //     .get_mut(&physics::Input::MouseLeft)
-                //     .unwrap() = false;
-            }
-            ggez::input::mouse::MouseButton::Right => {
-                // self
-                //     .player
-                //     .inputs
-                //     .get_mut(&physics::Input::MouseRight)
-                //     .unwrap() = false;
-            }
+            ggez::input::mouse::MouseButton::Left => {}
+            ggez::input::mouse::MouseButton::Right => {}
             _ => (),
         }
     }
