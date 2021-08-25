@@ -21,6 +21,7 @@ struct Game {
     camera: camera::Camera,
     window_size: glam::Vec2,
     menu: menu::Gui,
+    id_manager: id::IdManager,
 }
 
 impl Game {
@@ -62,6 +63,7 @@ impl Game {
             camera: camera,
             window_size: glam::Vec2::ZERO,
             menu: main_menu,
+            id_manager: id_manager,
         })
     }
 }
@@ -133,7 +135,7 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
     }
     fn key_down_event(
         &mut self,
-        _ctx: &mut ggez::Context,
+        ctx: &mut ggez::Context,
         keycode: ggez::event::KeyCode,
         keymod: ggez::input::keyboard::KeyMods,
         _repeat: bool,
@@ -145,6 +147,11 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
             ggez::event::KeyCode::S => self.player.inputs.down = true,
             ggez::event::KeyCode::Q => self.player.inputs.left = true,
             ggez::event::KeyCode::D => self.player.inputs.right = true,
+            ggez::event::KeyCode::E => {
+                self.map.difficulty += 1;
+                self.map.gen_new_map(self.map.difficulty.to_string(), ctx, self.id_manager,
+            );
+            },
             ggez::event::KeyCode::Escape => {
                 if !self.menu.show_main && !self.menu.show_settings {
                     self.menu.show_main = true;

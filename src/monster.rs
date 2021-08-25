@@ -97,9 +97,9 @@ impl Brain {
             }
         }
         if result {
-            println!("I SEE YOUUUU");
+            //println!("I SEE YOUUUU");
         } else {
-            println!("WHEEERREE AAARRREE YOUUUUU");
+            //println!("WHEEERREE AAARRREE YOUUUUU");
         }
         result
     }

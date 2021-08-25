@@ -25,6 +25,7 @@ pub struct Map {
     pub total_cols: f32,
     pub diag_size: f32,
     pub image_hashmap: HashMap<i32, ggez::graphics::spritebatch::SpriteBatch>,
+    pub difficulty: u32,
 }
 
 pub struct Tile {
@@ -45,6 +46,7 @@ impl Map {
             total_cols: 0.,
             diag_size: 0.,
             image_hashmap: HashMap::new(),
+            difficulty: 0,
         }
     }
 
@@ -64,9 +66,9 @@ impl Map {
         let tile_translate: HashMap<i32, String> = vec![
             (-1, "air".to_string()),
             (4, "wall".to_string()),
-            (10, "water".to_string())/*,
+            (10, "water".to_string()),
             (12, "crate".to_string()),
-            (18, "lava".to_string()),
+            (18, "lava".to_string()),/*
             (19, "pack".to_string()),
             (20, "spawn".to_string()),
             (21, "end".to_string())*/
@@ -78,7 +80,7 @@ impl Map {
             if value != "air" {
                 let mut texture_file_name: String = value.to_string();
                 texture_file_name.push_str(".png");
-                let pth = format!("/maps/{}/tiles/{}", map_name, texture_file_name);
+                let pth = format!("/tiles/{}", texture_file_name);
                 println!("Loading: '{}'", pth);
                 let image = ggez::graphics::Image::new(ctx, pth);
                 image_hashmap.insert(
@@ -107,9 +109,20 @@ impl Map {
                 line[MAP_WIDTH - 1] = 4;
                 let level = noise_map.get_value(i, j);
                 if level <= -0.6 {
-                    line[j] = 10;
+                    if self.difficulty >= 5 && self.difficulty < 20 {
+                        line[j] = 10;
+                    }
+                    else if self.difficulty >= 20 {
+                        line[j] = 18;
+                    }
+                    else {
+                        line[j] = -1;
+                    }
                 }
-                else if level > -0.6 &&  level <= 0.5 {
+                /*else if level > -0.6 && level <= -0.5 {
+                    line[j] = 18;
+                }*/
+                else if level > -0.6 && level <= 0.5 {
                     line[j] = -1;
                 }
                 else {
