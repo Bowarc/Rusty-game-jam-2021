@@ -65,26 +65,43 @@ impl Brain {
         //  https://cdn.discordapp.com/attachments/406461353537175573/880003880681869342/unknown.png
         self.update(entity_pos, entity_angle);
 
+        let mut result = false;
         if physics::CheckCollision::point_in_circle(point, self.close_vision_circle) {
             // In the little circle
-            println!("I SEE YOUUUU");
-            return true;
+            // println!("I SEE YOUUUU");
+            result = true;
+            // return true;
         }
-
-        if physics::CheckCollision::point_in_circle(point, self.large_vision_circle) {
-            let angle_entity_point = physics::RayCasting::get_distance(entity_pos, point);
-            if angle_entity_point < self.vision_cone.1 || angle_entity_point > self.vision_cone.0 {
-                println!("I SEE YOUUUU");
-                // In the vision cone
-                return true;
+        if !result {
+            if physics::CheckCollision::point_in_circle(point, self.large_vision_circle) {
+                let angle_entity_point = physics::RayCasting::get_distance(entity_pos, point);
+                // if angle_entity_point < self.vision_cone.1
+                //     || angle_entity_point > self.vision_cone.0
+                // {
+                if self.vision_cone.1 < angle_entity_point
+                    && angle_entity_point < self.vision_cone.0
+                {
+                    // println!("I SEE YOUUUU");
+                    // In the vision cone
+                    result = true;
+                    // return true;
+                } else {
+                    // Not in the vision cone
+                    result = false
+                    // return false;
+                }
             } else {
-                // Not in the vision cone
-                return false;
+                // Not in the outside circle
+                result = false
+                // return false;
             }
-        } else {
-            // Not in the outside circle
-            return false;
         }
+        if result {
+            println!("I SEE YOUUUU");
+        } else {
+            println!("WHEEERREE AAARRREE YOUUUUU");
+        }
+        result
     }
 }
 
@@ -113,10 +130,10 @@ impl MonsterManager {
         self.monster_list.push(new_monster);
     }
 
-    pub fn update(&mut self) {
+    pub fn update(&mut self, player_pos: glam::Vec2) {
         for i in 0..self.monster_list.len() {
             match &mut self.monster_list[i] {
-                Monster::TestBot(tb) => tb.update(),
+                Monster::TestBot(tb) => tb.update(player_pos),
             }
         }
     }
@@ -201,9 +218,14 @@ impl TestBot {
         }
     }
 
-    pub fn update(&mut self) {
+    pub fn update(&mut self, player_pos: glam::Vec2) {
         self.brain
             .update(glam::Vec2::from(self.hitbox.center()), self.los.angle);
+        self.brain.can_see(
+            glam::Vec2::from(self.hitbox.center()),
+            self.los.angle,
+            player_pos,
+        );
         // update(&mut self, entity_pos: glam::Vec2, entity_angle: f32)
     }
 }
