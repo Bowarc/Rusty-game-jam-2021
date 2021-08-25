@@ -198,6 +198,17 @@ impl CheckCollision {
                     - (line.0.y - line.1.y) * (point.y - q.y)),
         )
     }
+    pub fn point_in_rect(point: glam::Vec2, rect: ggez::graphics::Rect) -> bool {
+        let x1 = rect.x;
+        let y1 = rect.y;
+        let x2 = x1 + rect.w;
+        let y2 = y1 + rect.h;
+        if x1 < point.x && point.x < x2 && y1 < point.y && point.y < y2 {
+            return true;
+        } else {
+            return false;
+        }
+    }
     pub fn point_in_circle(point: glam::Vec2, circle: Circle) -> bool {
         //CollisionResult
         let dist_point_circle_center = RayCasting::get_distance(circle.center, point);

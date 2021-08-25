@@ -9,6 +9,7 @@ const VISION_CONE: f32 = 100.;
 pub enum MonsterType {
     TestBot,
 }
+
 pub enum Monster {
     TestBot(TestBot),
 }
@@ -22,7 +23,6 @@ pub struct Brain {
 pub struct MonsterManager {
     pub monster_list: Vec<Monster>,
 }
-
 pub struct TestBot {
     pub id: i32,
     pub name: String,
@@ -44,7 +44,7 @@ impl Brain {
         }
     }
     pub fn update(&mut self, entity_pos: glam::Vec2, entity_angle: f32) {
-        let usable_angle = entity_angle.to_degrees() + 50.;
+        let usable_angle = entity_angle.to_degrees();
 
         self.vision_cone = (
             usable_angle - (VISION_CONE / 2.),
@@ -84,11 +84,11 @@ impl Brain {
                 result = false
             }
         }
-        if result {
-            println!("I SEE YOUUUU");
-        } else {
-            println!("WHEEERREE AAARRREE YOUUUUU");
-        }
+        // if result {
+        //     println!("I SEE YOUUUU");
+        // } else {
+        //     println!("WHEEERREE AAARRREE YOUUUUU");
+        // }
         result
     }
 }
@@ -170,14 +170,6 @@ impl MonsterManager {
                 ),
                 vision_cone.1.to_radians(),
             );
-            let test_line: glam::Vec2 = physics::rotate_line(
-                glam::Vec2::from(monster_hitbox.center()),
-                glam::Vec2::new(
-                    monster_hitbox.x + iq as f32 * 3. + monster_hitbox.w / 2.,
-                    monster_hitbox.y + monster_hitbox.h / 2.,
-                ),
-                0.,
-            );
 
             vision_circles_mesh.circle(
                 ggez::graphics::DrawMode::stroke(2.),
@@ -200,12 +192,6 @@ impl MonsterManager {
             )?;
             vision_circles_mesh.line(
                 &[glam::Vec2::from(monster_hitbox.center()), cone_1_endpoint_r],
-                1.,
-                ggez::graphics::Color::WHITE,
-            )?;
-
-            vision_circles_mesh.line(
-                &[glam::Vec2::from(monster_hitbox.center()), test_line],
                 1.,
                 ggez::graphics::Color::WHITE,
             )?;

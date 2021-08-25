@@ -1,4 +1,4 @@
-use crate::{bloc, id, physics};
+use crate::{bloc, id, monster, physics, player};
 use ggez;
 use noise::{
     utils::{NoiseMapBuilder, PlaneMapBuilder},
@@ -57,16 +57,18 @@ impl Map {
         let map_name = format!("Stage: {}", self.difficulty);
         println!("Loading map: {}", map_name);
 
-        let ghost_tiles: Vec<f32> = vec![-1., 10., 18., 19., 20., 21.];
+        let ghost_tiles: Vec<f32> = vec![-1., 9., 10., 18., 19., 20., 21.];
         let tile_translate: HashMap<i32, String> = vec![
             (-1, "air".to_string()),
             (4, "wall".to_string()),
             (9, "water".to_string()),
             (12, "crate".to_string()),
-            (18, "lava".to_string()), /*
-                                      (19, "pack".to_string()),
-                                      (20, "spawn".to_string()),
-                                      (21, "end".to_string())*/
+            (18, "lava".to_string()),
+            (20, "spawn".to_string()),
+            (21, "end".to_string()), /*
+
+                                     (20, "spawn".to_string()),
+                                     */
         ]
         .into_iter()
         .collect();
@@ -100,6 +102,8 @@ impl Map {
         map[0] = [4; MAP_HEIGHT];
         map[MAP_HEIGHT - 1] = [4; MAP_HEIGHT];
 
+        let mut spawn_done = false;
+        let mut end_done = false;
         for i in 1..MAP_HEIGHT - 1 {
             for j in 1..MAP_WIDTH - 1 {
                 line[0] = 4;
@@ -118,6 +122,17 @@ impl Map {
                 } else {
                     line[j] = 4;
                 }
+
+                // BRUH I HAVE NO IDEA HOW TO USE THIS
+                // if level == 1.0 && !spawn_done {
+                //     line[j] = 20;
+                //     spawn_done = true;
+                // }
+                // if level == 0.0 && !end_done {
+                //     line[j] = 21;
+                //     end_done = true;
+                // }
+                // END OF BRUH
                 map[i] = line;
             }
         }
@@ -208,6 +223,28 @@ impl Map {
         }
         self.bloc_list = bloclist;
         println!("Bloc list size: {}", self.bloc_list.len());
+    }
+    pub fn bloc_effects<E: physics::EntityTrait>(&mut self, entity: &mut E) {
+        for bloc_index in 0..self.bloc_list.len() {
+            let hitbox = physics::EntityTrait::get_hitbox(entity);
+            if physics::CheckCollision::point_in_rect(
+                glam::Vec2::from(hitbox.center()),
+                physics::EntityTrait::get_hitbox(&self.bloc_list[bloc_index]),
+            ) {
+                match &mut self.bloc_list[bloc_index] {
+                    bloc::Bloc::Air(_a) => {}
+                    bloc::Bloc::Water(_w) => {
+                        println!("No effect on water for now")
+                    }
+                    bloc::Bloc::Lava(l) => {
+                        l.damage(entity);
+                        // println!("Player should take damage (map.rs)")
+                    }
+
+                    _ => {}
+                }
+            }
+        }
     }
     pub fn draw(&mut self, ctx: &mut ggez::Context, draw_offset: glam::Vec2) -> ggez::GameResult {
         let draw_hitboxes = false;

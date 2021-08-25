@@ -63,9 +63,6 @@ impl Player {
             glam::Vec2::from(self.inputs.pointing),
             glam::Vec2::from(hitbox_center),
         );
-        // self.los.angle = (self.inputs.pointing.y - hitbox_center.1)
-        //     .atan2(self.inputs.pointing.x - hitbox_center.0);
-
         let weapon_range = 500.;
 
         let player_center = glam::Vec2::new(self.hitbox.center().x, self.hitbox.center().y);
@@ -140,6 +137,7 @@ impl Player {
     }
     pub fn take_damages(&mut self, damage: i32) {
         self.hp -= damage;
+        println!("Player's hp: {}", self.hp);
         if self.hp < 1 {
             println!("Player is supposed to be dead");
         }

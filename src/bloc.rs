@@ -1,4 +1,4 @@
-use crate::{map, physics};
+use crate::{map, monster, physics, player};
 use std;
 
 ///             TRANSLATE FOR MAP CREATION
@@ -54,7 +54,7 @@ impl Wall {
 
 impl Water {
     pub fn new(id: i32, tile: map::Tile) -> Self {
-        Self { id: id, tile: tile}
+        Self { id: id, tile: tile }
     }
 }
 
@@ -68,12 +68,15 @@ impl Lava {
             id_time_list: std::collections::HashMap::new(),
         }
     }
-    pub fn damage<E: physics::EntityTrait>(&mut self, mut entity: E) {
+    pub fn damage<E: physics::EntityTrait>(&mut self, entity: &mut E) {
         self.update();
         if !self.id_time_list.contains_key(&entity.id()) {
+            self.id_time_list
+                .insert(entity.id(), std::time::SystemTime::now());
             entity.take_damage(self.damage);
         }
     }
+
     pub fn update(&mut self) {
         for (id, time) in self.id_time_list.clone().iter() {
             match time.elapsed() {

@@ -100,10 +100,17 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
                 &mut self.map.bloc_list,
                 &mut self.monster_manager.monster_list,
             );
+            // let player_vec = Vec::new().push(self.player);
+            self.map.bloc_effects(&mut self.player);
 
             // Update the monsters
             self.monster_manager
                 .update(glam::Vec2::from(self.player.hitbox.center()));
+            // self.map.bloc_effects(&self.monster_manager.monster_list);
+            for index in 0..self.monster_manager.monster_list.len() {
+                self.map
+                    .bloc_effects(&mut self.monster_manager.monster_list[index])
+            }
 
             // Update the camera
             self.camera.set_focus(
@@ -149,9 +156,8 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
             ggez::event::KeyCode::D => self.player.inputs.right = true,
             ggez::event::KeyCode::E => {
                 self.map.difficulty += 1;
-                self.map.gen_new_map(ctx, self.id_manager,
-            );
-            },
+                self.map.gen_new_map(ctx, self.id_manager);
+            }
             ggez::event::KeyCode::Escape => {
                 if !self.menu.show_main && !self.menu.show_settings {
                     self.menu.show_main = true;
