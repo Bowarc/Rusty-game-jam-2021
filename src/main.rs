@@ -106,7 +106,7 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
             // Update the monsters
             self.monster_manager
                 .update(glam::Vec2::from(self.player.hitbox.center()));
-            /*self.monster_manager.update_movements(
+            self.monster_manager.update_movements(
                 dt,
                 &self.map.bloc_list,
                 (
@@ -114,7 +114,7 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
                     self.map.ghost_tiles.clone(),
                     self.map.tile_size,
                 ),
-            );*/
+            );
             // self.map.bloc_effects(&self.monster_manager.monster_list);
             for index in 0..self.monster_manager.monster_list.len() {
                 self.map
@@ -122,11 +122,12 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
             }
 
             // Update the camera
+
+            // let focus =
+            //     physics::EntityTrait::get_hitbox(&self.monster_manager.monster_list[0]).center();
+            let focus = self.player.hitbox.center();
             self.camera.set_focus(
-                (
-                    self.player.hitbox.x + (self.player.hitbox.w / 2.),
-                    self.player.hitbox.y + (self.player.hitbox.h / 2.),
-                ),
+                (focus.x, focus.x),
                 (self.window_size.x, self.window_size.y),
                 (self.map.total_rows, self.map.total_cols),
                 self.map.tile_size,
@@ -164,7 +165,9 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
             ggez::event::KeyCode::Q => self.player.inputs.left = true,
             ggez::event::KeyCode::D => self.player.inputs.right = true,
             ggez::event::KeyCode::E => {
-                if ((self.player.hitbox.x/self.map.tile_size).ceil() == self.map.end.x.ceil()) && ((self.player.hitbox.y/self.map.tile_size).ceil() == self.map.end.y.ceil()) {
+                if ((self.player.hitbox.x / self.map.tile_size).ceil() == self.map.end.x.ceil())
+                    && ((self.player.hitbox.y / self.map.tile_size).ceil() == self.map.end.y.ceil())
+                {
                     self.map.difficulty += 1;
                     self.map.gen_new_map(ctx, self.id_manager).unwrap();
                     self.player.hitbox.x = self.map.spawn.x * self.map.tile_size;
