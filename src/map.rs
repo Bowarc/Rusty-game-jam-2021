@@ -1,12 +1,11 @@
-use crate::{bloc, id, monster, physics, player};
+use crate::{bloc, id, physics};
 use ggez;
 use noise::{
     utils::{NoiseMapBuilder, PlaneMapBuilder},
     Seedable, SuperSimplex,
 };
-use serde_json::Value; //Result
 use std::collections::HashMap;
-use std::io::Read;
+
 use std::time::SystemTime;
 
 pub struct Map {

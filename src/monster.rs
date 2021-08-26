@@ -262,8 +262,13 @@ impl TestBot {
         if self.los.angle as f64 > std::f64::consts::PI {
             self.los.angle = -std::f64::consts::PI as f32;
         }
+
+        if self.brain.see_something {
+            self.los.angle =
+                physics::two_points_angle(glam::Vec2::from(self.hitbox.center()), player_pos);
+        }
         // let test_angle =
-        //     physics::two_points_angle(glam::Vec2::from(self.hitbox.center()), player_pos);
+        // physics::two_points_angle(glam::Vec2::from(self.hitbox.center()), player_pos);
         // println!("Angle: {}", test_angle);
         self.brain
             .update(glam::Vec2::from(self.hitbox.center()), self.los.angle);

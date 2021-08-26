@@ -146,7 +146,7 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
         keycode: ggez::event::KeyCode,
         keymod: ggez::input::keyboard::KeyMods,
         _repeat: bool,
-    ) {
+    ) -> () {
         self.menu.egui_backend.input.key_down_event(keycode, keymod);
 
         match keycode {
@@ -156,7 +156,7 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
             ggez::event::KeyCode::D => self.player.inputs.right = true,
             ggez::event::KeyCode::E => {
                 self.map.difficulty += 1;
-                self.map.gen_new_map(ctx, self.id_manager);
+                self.map.gen_new_map(ctx, self.id_manager).unwrap();
             }
             ggez::event::KeyCode::Escape => {
                 if !self.menu.show_main && !self.menu.show_settings {

@@ -1,4 +1,4 @@
-use crate::{map, monster, physics, player};
+use crate::{map, physics};
 use std;
 
 ///             TRANSLATE FOR MAP CREATION
