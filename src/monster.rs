@@ -339,12 +339,14 @@ impl TestBot {
             let my_pos = self.hitbox.center();
 
             let mut direction =
-                glam::Vec2::new(desired_position.x - my_pos.x, desired_position.y - my_pos.y);
+                glam::Vec2::new(my_pos.x - desired_position.x, my_pos.y - desired_position.y);
 
+            println!("dir: {:?}", direction);
             let mut delta_pos = self.hitbox.clone();
 
             direction = physics::normalize_point(direction);
-
+            println!("dir: {:?}", direction);
+            println!("");
             let mut speed = TEST_BOT_SPEED * dt;
 
             let distance_to_desired_position =
@@ -363,7 +365,7 @@ impl TestBot {
                 &bloc_list,
             );
 
-            if self.hitbox == new_hitbox && !self.brain.wandering_path.is_empty() {
+            if self.hitbox == new_hitbox {
                 println!("DOOOOR STUCK, id: {}", self.id);
                 self.brain.wandering_path = Vec::new();
             } else {
