@@ -17,6 +17,8 @@ pub enum Bloc {
     Wall(Wall),
     Water(Water),
     Lava(Lava),
+    Spawn(Spawn),
+    End(End),
 }
 
 pub struct Air {
@@ -28,16 +30,28 @@ pub struct Wall {
     pub id: i32,
     pub tile: map::Tile,
 }
+
 pub struct Water {
     pub id: i32,
     pub tile: map::Tile,
 }
+
 pub struct Lava {
     pub id: i32,
     pub tile: map::Tile,
     pub damage: i32,
     pub damage_speed: i32,
     pub id_time_list: std::collections::HashMap<i32, std::time::SystemTime>,
+}
+
+pub struct Spawn {
+    pub id: i32,
+    pub tile: map::Tile,
+}
+
+pub struct End {
+    pub id: i32,
+    pub tile: map::Tile,
 }
 
 impl Air {
@@ -53,6 +67,18 @@ impl Wall {
 }
 
 impl Water {
+    pub fn new(id: i32, tile: map::Tile) -> Self {
+        Self { id: id, tile: tile }
+    }
+}
+
+impl Spawn {
+    pub fn new(id: i32, tile: map::Tile) -> Self {
+        Self { id: id, tile: tile }
+    }
+}
+
+impl End {
     pub fn new(id: i32, tile: map::Tile) -> Self {
         Self { id: id, tile: tile }
     }
@@ -100,6 +126,8 @@ impl physics::EntityTrait for Bloc {
             Bloc::Wall(w) => w.tile.hitbox,
             Bloc::Water(w) => w.tile.hitbox,
             Bloc::Lava(l) => l.tile.hitbox,
+            Bloc::Spawn(s) => s.tile.hitbox,
+            Bloc::End(e) => e.tile.hitbox,
         }
     }
     fn get_angle(&self) -> f32 {
@@ -108,6 +136,8 @@ impl physics::EntityTrait for Bloc {
             Bloc::Wall(w) => w.tile.angle,
             Bloc::Water(w) => w.tile.angle,
             Bloc::Lava(l) => l.tile.angle,
+            Bloc::Spawn(s) => s.tile.angle,
+            Bloc::End(e) => e.tile.angle,
         }
     }
     fn ray_cast_bypass(&self) -> bool {
@@ -116,6 +146,8 @@ impl physics::EntityTrait for Bloc {
             Bloc::Wall(w) => w.tile.transparent,
             Bloc::Water(w) => w.tile.transparent,
             Bloc::Lava(l) => l.tile.transparent,
+            Bloc::Spawn(s) => s.tile.transparent,
+            Bloc::End(e) => e.tile.transparent,
         }
     }
     fn rotated_hitbox(&self) -> Vec<glam::Vec2> {
@@ -124,6 +156,8 @@ impl physics::EntityTrait for Bloc {
             Bloc::Wall(w) => physics::rotate_square(w.tile.hitbox, w.tile.angle),
             Bloc::Water(w) => physics::rotate_square(w.tile.hitbox, w.tile.angle),
             Bloc::Lava(l) => physics::rotate_square(l.tile.hitbox, l.tile.angle),
+            Bloc::Spawn(s) => physics::rotate_square(s.tile.hitbox, s.tile.angle),
+            Bloc::End(e) => physics::rotate_square(e.tile.hitbox, e.tile.angle),
         }
     }
     fn id(&self) -> i32 {
@@ -132,6 +166,8 @@ impl physics::EntityTrait for Bloc {
             Bloc::Wall(w) => w.id,
             Bloc::Water(w) => w.id,
             Bloc::Lava(l) => l.id,
+            Bloc::Spawn(s) => s.id,
+            Bloc::End(e) => e.id,
         }
     }
     fn take_damage(&mut self, _damage: i32) {}

@@ -278,6 +278,8 @@ impl CheckCollision {
                 bloc::Bloc::Wall(w) => &w.tile,
                 bloc::Bloc::Water(w) => &w.tile,
                 bloc::Bloc::Lava(l) => &l.tile,
+                bloc::Bloc::Spawn(s) => &s.tile,
+                bloc::Bloc::End(e) => &e.tile,
             };
 
             if !tile.transparent {

@@ -1,12 +1,14 @@
-use crate::{bloc, id, physics};
 use ggez;
 use noise::{
     utils::{NoiseMapBuilder, PlaneMapBuilder},
     Seedable, SuperSimplex,
 };
+use glam::Vec2;
+use rand::Rng;
 use std::collections::HashMap;
-
 use std::time::SystemTime;
+
+use crate::{bloc, id, physics};
 
 pub struct Map {
     pub map_title: String,
@@ -19,6 +21,8 @@ pub struct Map {
     pub diag_size: f32,
     pub image_hashmap: HashMap<i32, ggez::graphics::spritebatch::SpriteBatch>,
     pub difficulty: u32,
+    pub start: Vec2,
+    pub end: Vec2,
 }
 
 pub struct Tile {
@@ -40,6 +44,8 @@ impl Map {
             diag_size: 0.,
             image_hashmap: HashMap::new(),
             difficulty: 0,
+            start: Vec2::new(0., 0.),
+            end: Vec2::new(0., 0.),
         }
     }
 
@@ -64,11 +70,8 @@ impl Map {
             (9, "water2".to_string()),
             (12, "crate".to_string()),
             (18, "lava6".to_string()),
-            /*
-            (20, "spawn".to_string())
-            (21, "end".to_string())
+            (21, "end".to_string()),
             (20, "spawn".to_string()),
-            */
         ]
         .into_iter()
         .collect();
@@ -102,8 +105,6 @@ impl Map {
         map[0] = [4; MAP_HEIGHT];
         map[MAP_HEIGHT - 1] = [4; MAP_HEIGHT];
 
-        let mut spawn_done = false;
-        let mut end_done = false;
         for i in 1..MAP_HEIGHT - 1 {
             for j in 1..MAP_WIDTH - 1 {
                 line[0] = 4;
@@ -123,16 +124,6 @@ impl Map {
                     line[j] = 4;
                 }
 
-                // BRUH I HAVE NO IDEA HOW TO USE THIS
-                // if level == 1.0 && !spawn_done {
-                //     line[j] = 20;
-                //     spawn_done = true;
-                // }
-                // if level == 0.0 && !end_done {
-                //     line[j] = 21;
-                //     end_done = true;
-                // }
-                // END OF BRUH
                 map[i] = line;
             }
         }
@@ -140,6 +131,39 @@ impl Map {
         let mut map_vec: Vec<Vec<i32>> = Vec::new();
         for i in 0..MAP_HEIGHT {
             map_vec.push(map[i].to_vec());
+        }
+
+        let mut rng = rand::thread_rng();
+        let mut start: (usize, usize);
+        let mut end: (usize, usize);
+        let mut start_end_found = false;
+        while !start_end_found {
+            start = (
+                rng.gen_range(1..MAP_WIDTH / 2),
+                rng.gen_range(1..MAP_HEIGHT / 2)
+            );
+            end = (
+                rng.gen_range(MAP_WIDTH / 2..MAP_WIDTH - 1),
+                rng.gen_range(MAP_HEIGHT / 2..MAP_HEIGHT - 1)
+            );
+            let start_pos = (start.0 as f32 * self.tile_size, start.1 as f32 * self.tile_size);
+            let end_pos = (end.0 as f32 * self.tile_size, end.1 as f32 * self.tile_size);
+            match physics::PathFinding::Astar(
+                Vec2::from(start_pos),
+                Vec2::from(end_pos),
+                (
+                    map_vec.clone(),
+                    self.ghost_tiles.clone(),
+                    self.tile_size,
+                ),
+            ) {
+                physics::PathFindingResult::Ok(_) => {
+                    start_end_found = true;
+                    map_vec[start.1][start.0] = 20;
+                    map_vec[end.1][end.0] = 21;
+                },
+                physics::PathFindingResult::Fail => start_end_found = false,
+            };
         }
 
         self.map_file_content = map_vec;
@@ -209,6 +233,20 @@ impl Map {
                             tile,
                         ))),
                     ),
+                    20 => (
+                        true,
+                        Some(bloc::Bloc::Spawn(bloc::Spawn::new(
+                            id_manager.get_new_id(),
+                            tile,
+                        ))),
+                    ),
+                    21 => (
+                        true,
+                        Some(bloc::Bloc::End(bloc::End::new(
+                            id_manager.get_new_id(),
+                            tile,
+                        ))),
+                    ),
                     _ => (false, None),
                 };
 
@@ -273,6 +311,8 @@ impl Map {
                 bloc::Bloc::Wall(w) => &w.tile,
                 bloc::Bloc::Water(w) => &w.tile,
                 bloc::Bloc::Lava(l) => &l.tile,
+                bloc::Bloc::Spawn(s) => &s.tile,
+                bloc::Bloc::End(e) => &e.tile,
             };
 
             // if tile.material == -1 {
@@ -315,6 +355,8 @@ impl Map {
                 bloc::Bloc::Wall(w) => &w.tile,
                 bloc::Bloc::Water(w) => &w.tile,
                 bloc::Bloc::Lava(l) => &l.tile,
+                bloc::Bloc::Spawn(s) => &s.tile,
+                bloc::Bloc::End(e) => &e.tile,
             };
 
             //  THIS IS TEMPORARY
