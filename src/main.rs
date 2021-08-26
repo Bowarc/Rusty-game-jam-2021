@@ -125,7 +125,6 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
 
             // Update the camera
 
-            // let focus =
             //     physics::EntityTrait::get_hitbox(&self.monster_manager.monster_list[0]).center();
             let focus = self.player.hitbox.center();
             self.camera.set_focus(
@@ -148,6 +147,18 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
         if self.menu.show_main || self.menu.show_settings {
             self.menu.draw(ctx, draw_offset)?;
         }
+
+        // Draw the GUI
+        let level_dest = glam::Vec2::new(10.0, 10.0);
+        let hp_dest = glam::Vec2::new(200.0, 10.0);
+
+        let level_str = format!("Level: {}", self.map.difficulty);
+        let hp_str = format!("HP: {}", self.player.hp);
+        let font = ggez::graphics::Font::new(ctx, "/LiberationMono-Regular.ttf")?;
+        let level_display = ggez::graphics::Text::new((level_str, font, 32.0));
+        let hp_display = ggez::graphics::Text::new((hp_str, font, 32.0));
+        ggez::graphics::draw(ctx, &level_display, (level_dest, 0.0, ggez::graphics::Color::WHITE))?;
+        ggez::graphics::draw(ctx, &hp_display, (hp_dest, 0.0, ggez::graphics::Color::WHITE))?;
 
         ggez::graphics::present(ctx)?;
         Ok(())
