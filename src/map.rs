@@ -59,16 +59,16 @@ impl Map {
 
         let ghost_tiles: Vec<f32> = vec![-1., 9., 10., 18., 19., 20., 21.];
         let tile_translate: HashMap<i32, String> = vec![
-            (-1, "air".to_string()),
-            (4, "wall".to_string()),
-            (9, "water".to_string()),
+            (-1, "ground".to_string()),
+            (4, "ground3".to_string()),
+            (9, "water2".to_string()),
             (12, "crate".to_string()),
-            (18, "lava".to_string()),
+            (18, "lava6".to_string()),
+            /*
+            (20, "spawn".to_string())
+            (21, "end".to_string())
             (20, "spawn".to_string()),
-            (21, "end".to_string()), /*
-
-                                     (20, "spawn".to_string()),
-                                     */
+            */
         ]
         .into_iter()
         .collect();
@@ -274,9 +274,9 @@ impl Map {
                 bloc::Bloc::Lava(l) => &l.tile,
             };
 
-            if tile.material == -1 {
-                continue;
-            }
+            // if tile.material == -1 {
+            //     continue;
+            // }
 
             let point = glam::Vec2::new(0.5, 0.5);
             let tile_drawparams = ggez::graphics::DrawParam::new()
