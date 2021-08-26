@@ -60,8 +60,8 @@ impl Player {
             -camera_scroll.y + self.hitbox.center().y,
         );
         self.los.angle = physics::two_points_angle(
-            glam::Vec2::from(self.inputs.pointing),
             glam::Vec2::from(hitbox_center),
+            glam::Vec2::from(self.inputs.pointing),
         );
         let weapon_range = 500.;
 
