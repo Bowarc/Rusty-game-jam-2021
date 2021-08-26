@@ -2,7 +2,7 @@ use crate::{bloc, id, physics};
 use ggez;
 use glam;
 use rand::Rng;
-const TEST_BOT_SPEED: f32 = 350.;
+const TEST_BOT_SPEED: f32 = 250.;
 const VISION_CONE: f32 = 100.;
 
 pub enum MonsterType {
@@ -345,11 +345,11 @@ impl TestBot {
         // let speed = TEST_BOT_SPEED * dt;
         // self.update_movements2(bloc_list, speed);
         if !self.brain.wandering_path.is_empty() {
-            println!("my pos: {:?}", self.hitbox.center());
+            // println!("my pos: {:?}", self.hitbox.center());
 
             let desired_position = self.brain.wandering_path[0];
-            println!("my goal: {:?}", desired_position);
-            println!("");
+            // println!("my goal: {:?}", desired_position);
+            // println!("");
 
             let my_pos = self.hitbox.center();
 

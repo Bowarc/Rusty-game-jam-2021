@@ -127,7 +127,7 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
             //     physics::EntityTrait::get_hitbox(&self.monster_manager.monster_list[0]).center();
             let focus = self.player.hitbox.center();
             self.camera.set_focus(
-                (focus.x, focus.x),
+                (focus.x, focus.y),
                 (self.window_size.x, self.window_size.y),
                 (self.map.total_rows, self.map.total_cols),
                 self.map.tile_size,
@@ -165,14 +165,26 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
             ggez::event::KeyCode::Q => self.player.inputs.left = true,
             ggez::event::KeyCode::D => self.player.inputs.right = true,
             ggez::event::KeyCode::E => {
-                if ((self.player.hitbox.x / self.map.tile_size).ceil() == self.map.end.x.ceil())
-                    && ((self.player.hitbox.y / self.map.tile_size).ceil() == self.map.end.y.ceil())
-                {
+                let distance_from_end = physics::RayCasting::get_distance(
+                    glam::Vec2::from(self.player.hitbox.center()),
+                    glam::Vec2::new(
+                        self.map.end.x * self.map.tile_size + (self.map.tile_size / 2.),
+                        self.map.end.y * self.map.tile_size + (self.map.tile_size / 2.),
+                    ),
+                );
+
+                if distance_from_end < self.map.tile_size {
                     self.map.difficulty += 1;
                     self.map.gen_new_map(ctx, self.id_manager).unwrap();
                     self.player.hitbox.x = self.map.spawn.x * self.map.tile_size;
                     self.player.hitbox.y = self.map.spawn.y * self.map.tile_size;
                 }
+
+                // if ((self.player.hitbox.center().x / self.map.tile_size) == self.map.end.x)
+                //     && ((self.player.hitbox.center().y / self.map.tile_size) == self.map.end.y)
+                // {
+
+                // }
             }
             ggez::event::KeyCode::Escape => {
                 if !self.menu.show_main && !self.menu.show_settings {
@@ -187,23 +199,7 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
                     self.menu.freeze_game = true
                 }
             }
-            ggez::event::KeyCode::P => {
-                let wanted_pos = (1000., 1000.);
-                let path = physics::PathFinding::Astar(
-                    glam::Vec2::from(self.player.hitbox.center()),
-                    glam::Vec2::from(wanted_pos),
-                    (
-                        self.map.map_file_content.clone(),
-                        self.map.ghost_tiles.clone(),
-                        self.map.tile_size,
-                    ),
-                );
-                println!("p po: {:?}", self.player.hitbox.center());
-                match path {
-                    physics::PathFindingResult::Ok(path) => println!("{:?}", path),
-                    physics::PathFindingResult::Fail => println!("Failed"),
-                }
-            }
+
             _ => (),
         }
     }
