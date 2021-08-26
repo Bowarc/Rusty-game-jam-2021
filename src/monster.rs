@@ -69,13 +69,23 @@ impl Brain {
         }
         if !result {
             if physics::CheckCollision::point_in_circle(point, self.large_vision_circle) {
-                let angle_entity_point = physics::two_points_angle(entity_pos, point);
-                // println!(
-                //     "Vision cone: {}, {}.\n angle player: {}",
-                //     self.vision_cone.0, self.vision_cone.1, angle_entity_point
-                // );
-                let condition2 = self.vision_cone.0 < angle_entity_point
-                    && angle_entity_point < self.vision_cone.1;
+                let mut angle_entity_point = physics::two_points_angle(entity_pos, point).to_degrees();
+                let mut cone: (f32, f32) = (self.vision_cone.0.to_degrees(), self.vision_cone.1.to_degrees());
+                if cone.0 < 0. {
+                    cone.0 = cone.0 + 360.;
+                }
+                if cone.1 < 0. {
+                    cone.1 = cone.1 + 360.;
+                }
+                if angle_entity_point < 0. {
+                    angle_entity_point = angle_entity_point + 360.;
+                }
+                println!(
+                    "Vision cone: {}, {}.\n angle player: {}",
+                    cone.0, cone.1, angle_entity_point
+                );
+                let condition2 = (cone.0 < angle_entity_point
+                    && angle_entity_point < cone.1) || (cone.1 < cone.0 && ((cone.0 < angle_entity_point && angle_entity_point > 0.) || (angle_entity_point < cone.1 && angle_entity_point >= 0.)));
                 if condition2 {
                     // In the vision cone
                     result = true;
