@@ -22,6 +22,7 @@ struct Game {
     window_size: glam::Vec2,
     menu: menu::Gui,
     id_manager: id::IdManager,
+    keymap: input::KeyMap,
 }
 
 impl Game {
@@ -64,6 +65,7 @@ impl Game {
             window_size: glam::Vec2::ZERO,
             menu: main_menu,
             id_manager: id_manager,
+            keymap: input::KeyMap::default(),
         })
     }
 }
@@ -74,7 +76,7 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
             self.menu.main_menu(self.window_size, ctx);
         }
         if self.menu.show_settings {
-            self.menu.settings_menu(self.window_size);
+            self.menu.settings_menu(self.window_size, &mut self.keymap);
         }
         if !self.menu.freeze_game {
             let dt = ggez::timer::delta(ctx).as_secs_f32();
@@ -158,49 +160,45 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
         _repeat: bool,
     ) -> () {
         self.menu.egui_backend.input.key_down_event(keycode, keymod);
+        if self.menu.show_settings {
+            self.menu.latest = keycode;
+        }
 
-        match keycode {
-            ggez::event::KeyCode::Z => self.player.inputs.up = true,
-            ggez::event::KeyCode::S => self.player.inputs.down = true,
-            ggez::event::KeyCode::Q => self.player.inputs.left = true,
-            ggez::event::KeyCode::D => self.player.inputs.right = true,
-            ggez::event::KeyCode::E => {
-                let distance_from_end = physics::RayCasting::get_distance(
-                    glam::Vec2::from(self.player.hitbox.center()),
-                    glam::Vec2::new(
-                        self.map.end.x * self.map.tile_size + (self.map.tile_size / 2.),
-                        self.map.end.y * self.map.tile_size + (self.map.tile_size / 2.),
-                    ),
-                );
+        if keycode == self.keymap.up {
+            self.player.inputs.up = true;
+        } else if keycode == self.keymap.down {
+            self.player.inputs.down = true;
+        } else if keycode == self.keymap.left {
+            self.player.inputs.left = true;
+        } else if keycode == self.keymap.right {
+            self.player.inputs.right = true;
+        } else if keycode == self.keymap.next_map {
+            let distance_from_end = physics::RayCasting::get_distance(
+                glam::Vec2::from(self.player.hitbox.center()),
+                glam::Vec2::new(
+                    self.map.end.x * self.map.tile_size + (self.map.tile_size / 2.),
+                    self.map.end.y * self.map.tile_size + (self.map.tile_size / 2.),
+                ),
+            );
 
-                if distance_from_end < self.map.tile_size {
-                    self.map.difficulty += 1;
-                    self.map.gen_new_map(ctx, self.id_manager).unwrap();
-                    self.player.hitbox.x = self.map.spawn.x * self.map.tile_size;
-                    self.player.hitbox.y = self.map.spawn.y * self.map.tile_size;
-                }
-
-                // if ((self.player.hitbox.center().x / self.map.tile_size) == self.map.end.x)
-                //     && ((self.player.hitbox.center().y / self.map.tile_size) == self.map.end.y)
-                // {
-
-                // }
+            if distance_from_end < self.map.tile_size {
+                self.map.difficulty += 1;
+                self.map.gen_new_map(ctx, self.id_manager).unwrap();
+                self.player.hitbox.x = self.map.spawn.x * self.map.tile_size;
+                self.player.hitbox.y = self.map.spawn.y * self.map.tile_size;
             }
-            ggez::event::KeyCode::Escape => {
-                if !self.menu.show_main && !self.menu.show_settings {
-                    self.menu.show_main = true;
-                    self.menu.freeze_game = true
-                } else if self.menu.show_settings {
-                    self.menu.show_settings = false;
-                    self.menu.show_main = true;
-                    self.menu.freeze_game = true
-                } else if self.menu.show_main {
-                    self.menu.show_main = true;
-                    self.menu.freeze_game = true
-                }
+        } else if keycode == self.keymap.escape {
+            if !self.menu.show_main && !self.menu.show_settings {
+                self.menu.show_main = true;
+                self.menu.freeze_game = true
+            } else if self.menu.show_settings {
+                self.menu.show_settings = false;
+                self.menu.show_main = true;
+                self.menu.freeze_game = true
+            } else if self.menu.show_main {
+                self.menu.show_main = true;
+                self.menu.freeze_game = true
             }
-
-            _ => (),
         }
     }
     fn key_up_event(
@@ -209,12 +207,14 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
         keycode: ggez::event::KeyCode,
         _keymod: ggez::input::keyboard::KeyMods,
     ) {
-        match keycode {
-            ggez::event::KeyCode::Z => self.player.inputs.up = false,
-            ggez::event::KeyCode::S => self.player.inputs.down = false,
-            ggez::event::KeyCode::Q => self.player.inputs.left = false,
-            ggez::event::KeyCode::D => self.player.inputs.right = false,
-            _ => (),
+        if keycode == self.keymap.up {
+            self.player.inputs.up = false;
+        } else if keycode ==  self.keymap.down {
+            self.player.inputs.down = false;
+        } else if keycode == self.keymap.left {
+            self.player.inputs.left = false;
+        } else if keycode == self.keymap.right {
+            self.player.inputs.right = false;
         }
     }
     fn mouse_button_down_event(
