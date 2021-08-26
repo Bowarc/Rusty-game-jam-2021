@@ -56,7 +56,8 @@ impl Map {
         let map_name = format!("Stage: {}", self.difficulty);
         println!("Loading map: {}", map_name);
 
-        let ghost_tiles: Vec<f32> = vec![-1., 9., 10., 18., 19., 20., 21.];
+        self.ghost_tiles = vec![-1., 9., 10., 18., 19., 20., 21.];
+
         let tile_translate: HashMap<i32, String> = vec![
             (-1, "ground".to_string()),
             (4, "ground3".to_string()),
@@ -135,6 +136,7 @@ impl Map {
                 map[i] = line;
             }
         }
+
         let mut map_vec: Vec<Vec<i32>> = Vec::new();
         for i in 0..MAP_HEIGHT {
             map_vec.push(map[i].to_vec());
@@ -147,7 +149,7 @@ impl Map {
             physics::get_diagonal_size(self.total_cols, self.total_rows, self.tile_size);
         self.map_title = self.difficulty.to_string();
         self.image_hashmap = image_hashmap;
-        self.crate_tilemap(ghost_tiles, id_manager);
+        self.crate_tilemap(id_manager);
 
         match start_time.elapsed() {
             Ok(elapsed) => {
@@ -164,7 +166,7 @@ impl Map {
         Ok(())
     }
 
-    pub fn crate_tilemap(&mut self, transparent_tiles: Vec<f32>, mut id_manager: id::IdManager) {
+    pub fn crate_tilemap(&mut self, mut id_manager: id::IdManager) {
         let mut bloclist: Vec<bloc::Bloc> = Vec::new();
 
         for (y, row) in self.map_file_content.iter().enumerate() {
@@ -174,7 +176,7 @@ impl Map {
                     (y as f32 * self.tile_size) as f32,
                     self.tile_size,
                     *material,
-                    transparent_tiles.contains(&(*material as f32)),
+                    self.ghost_tiles.contains(&(*material as f32)),
                     0.,
                 );
 

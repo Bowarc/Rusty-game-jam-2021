@@ -1,8 +1,9 @@
 use ggez;
 use ggez::mint;
 use glam;
+use std;
 
-use crate::{bloc, monster, player};
+use crate::{bloc, id, monster, player};
 
 pub trait EntityTrait {
     fn get_hitbox(&self) -> ggez::graphics::Rect;
@@ -33,13 +34,29 @@ pub enum CollisionResult {
     Out,
 }
 
+pub enum PathFindingResult {
+    Ok(Vec<glam::Vec2>), // path
+    Fail,
+}
+
 pub struct CheckCollision;
 pub struct RayCasting;
+pub struct PathFinding;
 
 pub struct LOS {
     pub angle: f32,
     pub end_point: glam::Vec2,
     pub result: RayCastResult,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Ord)]
+struct PathFindingNode {
+    id: i32,
+    transparent: bool,
+    position: (i32, i32),
+    parent_position: (i32, i32),
+    g_cost: i32,
+    h_cost: i32,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -496,6 +513,190 @@ impl RayCasting {
     }
 }
 
+impl PathFinding {
+    fn construct_pf_grid(
+        map_infos: (Vec<Vec<i32>>, Vec<f32>, f32),
+        start_position: glam::Vec2,
+        desired_position: glam::Vec2,
+    ) -> Vec<Vec<PathFindingNode>> {
+        let raw_map = map_infos.0;
+        let transparent_tiles = map_infos.1;
+
+        let mut id_manager = id::IdManager::new();
+
+        let mut grid: Vec<Vec<PathFindingNode>> = Vec::new();
+        for (y, row) in raw_map.iter().enumerate() {
+            let mut grid_new_row: Vec<PathFindingNode> = Vec::new();
+            for (x, tile) in row.iter().enumerate() {
+                let transparent: bool;
+                if transparent_tiles.contains(&(*tile as f32)) {
+                    transparent = true;
+                } else {
+                    transparent = false;
+                }
+
+                let new_node = PathFindingNode::new(
+                    id_manager.get_new_id(),
+                    transparent,
+                    (x as i32, y as i32),
+                    // G cost
+                    PathFinding::get_distance(
+                        (y as i32, x as i32),
+                        (start_position.x as i32, start_position.y as i32),
+                    ),
+                    // H cost
+                    PathFinding::get_distance(
+                        (y as i32, x as i32),
+                        (desired_position.x as i32, desired_position.y as i32),
+                    ),
+                );
+
+                grid_new_row.push(new_node);
+            }
+            grid.push(grid_new_row);
+        }
+        grid
+    }
+    pub fn Astar(
+        entity_position: glam::Vec2,
+        desired_position: glam::Vec2,
+        map_infos: (Vec<Vec<i32>>, Vec<f32>, f32),
+    ) -> PathFindingResult {
+        // Preparation
+        let mut grid =
+            PathFinding::construct_pf_grid(map_infos.clone(), entity_position, desired_position);
+        let grid_size = glam::Vec2::new((grid.len() as i32) as f32, grid[0].len() as f32);
+
+        let tile_size = map_infos.2;
+
+        let start_node = grid[entity_position.y as usize][entity_position.x as usize].clone();
+
+        let mut target_node =
+            grid[desired_position.y as usize][desired_position.x as usize].clone();
+
+        let mut found = false;
+
+        if target_node.transparent {
+            let mut to_see_heap: std::collections::BinaryHeap<PathFindingNode> =
+                std::collections::BinaryHeap::new();
+            let mut to_see_id: Vec<i32> = Vec::new();
+
+            to_see_heap.push(start_node.clone());
+            to_see_id.push(start_node.id);
+
+            let mut seen_id: Vec<i32> = Vec::new();
+
+            while let Some(current_node) = to_see_heap.pop() {
+                let current_index_in_to_see = to_see_id
+                    .iter()
+                    .position(|id| *id == current_node.id)
+                    .unwrap();
+                to_see_id.swap_remove(current_index_in_to_see);
+                seen_id.push(current_node.id);
+
+                if current_node.id == target_node.id {
+                    target_node.parent_position = current_node.position;
+                    found = true;
+                    break;
+                }
+                for neighbour in PathFinding::get_neighbours(current_node.position, grid_size) {
+                    let mut neighbour_node =
+                        grid[neighbour.1 as usize][neighbour.0 as usize].clone();
+                    if !neighbour_node.transparent || seen_id.contains(&neighbour_node.id) {
+                        continue;
+                    }
+                    let new_move_cost =
+                        PathFinding::get_distance(start_node.position, neighbour_node.position);
+                    if new_move_cost < neighbour_node.g_cost
+                        || !to_see_id.contains(&neighbour_node.id)
+                    {
+                        neighbour_node.g_cost = new_move_cost;
+                        neighbour_node.h_cost = PathFinding::get_distance(
+                            target_node.position,
+                            neighbour_node.position,
+                        );
+                        neighbour_node.parent_position = current_node.position;
+
+                        if !to_see_id.contains(&neighbour_node.id) {
+                            grid[neighbour_node.position.1 as usize]
+                                [neighbour_node.position.0 as usize] = current_node.clone();
+                            to_see_id.push(neighbour_node.id);
+                            to_see_heap.push(neighbour_node);
+                        }
+                    }
+                }
+            }
+        } else {
+            println!("wanted pos is a wall")
+        }
+        if found {
+            let mut backtrack: Vec<glam::Vec2> = Vec::new();
+            let mut current = target_node.clone();
+
+            while current.parent_position != (-1, -1) {
+                backtrack.push(glam::Vec2::new(
+                    (current.position.0 as f32 * tile_size) + (tile_size / 2.),
+                    (current.position.1 as f32 * tile_size) + (tile_size / 2.),
+                ));
+
+                current = grid[current.parent_position.1 as usize]
+                    [current.parent_position.0 as usize]
+                    .clone();
+            }
+            backtrack.reverse();
+            PathFindingResult::Ok(backtrack)
+        } else {
+            PathFindingResult::Fail
+        }
+    }
+    fn get_neighbours(node_pos: (i32, i32), grid_size: glam::Vec2) -> Vec<(i32, i32)> {
+        let mut neighbours: Vec<(i32, i32)> = Vec::new();
+        let diagonal_neighbours = false;
+        if diagonal_neighbours {
+            for y in -1..2 {
+                for x in -1..2 {
+                    if x == 0 && y == 0 {
+                        continue;
+                    }
+                    let check_x = node_pos.0 + x as i32;
+                    let check_y = node_pos.1 + y as i32;
+
+                    if check_x >= 0
+                        && check_x < grid_size.x as i32
+                        && check_y >= 0
+                        && check_y < grid_size.y as i32
+                    {
+                        neighbours.push((check_x, check_y));
+                    }
+                }
+            }
+        } else {
+            let nei_list = vec![
+                (node_pos.0 + 1, node_pos.1),
+                (node_pos.0 - 1, node_pos.1),
+                (node_pos.0, node_pos.1 + 1),
+                (node_pos.0, node_pos.1 - 1),
+            ];
+            for i in nei_list {
+                if i.0 >= 0 && i.0 < grid_size.x as i32 && i.1 >= 0 && i.1 < grid_size.y as i32 {
+                    neighbours.push((i.0, i.1))
+                }
+            }
+        }
+        neighbours
+    }
+    fn get_distance(nodeA: (i32, i32), nodeB: (i32, i32)) -> i32 {
+        let dist_x = (nodeA.0 - nodeB.0).abs();
+        let dist_y = (nodeA.1 - nodeB.1).abs();
+
+        if dist_x < dist_y {
+            14 * dist_y + 10 * (dist_x - dist_y)
+        } else {
+            14 * dist_x + 10 * (dist_y - dist_x)
+        }
+    }
+}
+
 // impl RotatedHitbox {
 //     pub fn new(r: ggez::graphics::Rect, angle: f32) -> Self {
 //         // rotate_square(r, angle)
@@ -511,6 +712,25 @@ impl RayCasting {
 //         vec![self.p1, self.p2, self.p3, self.p4]
 //     }
 // }
+
+impl PathFindingNode {
+    fn new(id: i32, transparent: bool, position: (i32, i32), g_cost: i32, h_cost: i32) -> Self {
+        PathFindingNode {
+            id: id,
+            transparent: transparent,
+            position: position,
+            parent_position: (-1, -1),
+            g_cost: g_cost,
+            h_cost: h_cost,
+        }
+    }
+}
+
+impl PartialOrd for PathFindingNode {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        other.h_cost.partial_cmp(&self.h_cost)
+    }
+}
 
 impl Circle {
     pub fn new(pos: glam::Vec2, radius: f32) -> Self {
