@@ -106,6 +106,15 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
             // Update the monsters
             self.monster_manager
                 .update(glam::Vec2::from(self.player.hitbox.center()));
+            self.monster_manager.update_movements(
+                dt,
+                &self.map.bloc_list,
+                (
+                    self.map.map_file_content.clone(),
+                    self.map.ghost_tiles.clone(),
+                    self.map.tile_size,
+                ),
+            );
             // self.map.bloc_effects(&self.monster_manager.monster_list);
             for index in 0..self.monster_manager.monster_list.len() {
                 self.map

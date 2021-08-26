@@ -18,7 +18,7 @@ pub struct Brain {
     pub large_vision_circle: physics::Circle,
     pub vision_cone: (f32, f32),
     pub see_something: bool,
-    pub wandering_path: Vec<(glam::Vec2)>,
+    pub wandering_path: Vec<glam::Vec2>,
 }
 
 pub struct MonsterManager {
@@ -77,14 +77,31 @@ impl MonsterManager {
         for i in 0..self.monster_list.len() {
             match &mut self.monster_list[i] {
                 Monster::TestBot(tb) => {
-                    if tb.brain.wandering_path.is_empty() {
-                        // self.generate_pathfinding(tb.hitbox)
+                    if tb.brain.wandering_path.is_empty()
+                        && pathfinding_count < pathfinding_threshold
+                    {
+                        pathfinding_count += 1;
+                        let random_desired_pos = glam::Vec2::new(1000., 1000.);
+                        let path_result = physics::PathFinding::Astar(
+                            glam::Vec2::from(tb.hitbox.center()),
+                            random_desired_pos,
+                            map_infos.clone(),
+                        );
+                        match path_result {
+                            physics::PathFindingResult::Ok(path) => {
+                                tb.brain.wandering_path = path;
+                            }
+                            physics::PathFindingResult::Fail => {
+                                println!("Failed pathfinding for bot id: {}", tb.id);
+                            }
+                        }
                     }
                     tb.update_movements(dt, bloc_list);
                 }
             }
         }
     }
+
     pub fn draw_monsters(
         &self,
         ctx: &mut ggez::Context,
@@ -171,17 +188,20 @@ impl MonsterManager {
 
         let builded_vision_mesh = vision_circles_mesh.build(ctx)?;
 
-        ggez::graphics::draw(
-            ctx,
-            &builded_hitbox_mesh,
-            (draw_offset, 0., ggez::graphics::Color::WHITE),
-        )?;
+        // if !self.monster_list.is_empty() {
+        //     ggez::graphics::draw(
+        //         ctx,
+        //         &builded_hitbox_mesh,
+        //         (draw_offset, 0., ggez::graphics::Color::WHITE),
+        //     )?;
 
-        ggez::graphics::draw(
-            ctx,
-            &builded_vision_mesh,
-            (draw_offset, 0., ggez::graphics::Color::WHITE),
-        )?;
+        //     ggez::graphics::draw(
+        //         ctx,
+        //         &builded_vision_mesh,
+        //         (draw_offset, 0., ggez::graphics::Color::WHITE),
+        //     )?;
+        // }
+
         Ok(())
     }
 }
@@ -312,6 +332,7 @@ impl TestBot {
             .can_see(glam::Vec2::from(self.hitbox.center()), player_pos);
     }
     pub fn update_movements(&mut self, dt: f32, bloc_list: &Vec<bloc::Bloc>) {
+        println!("my pos: {:?}", self.hitbox.center());
         if !self.brain.wandering_path.is_empty() {
             let desired_position = self.brain.wandering_path[0];
 
