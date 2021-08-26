@@ -35,7 +35,7 @@ impl Game {
         map.gen_new_map(ctx, id_manager)?;
 
         // Create the player
-        let player_spawn_pos = glam::Vec2::new(tile_size * 5., tile_size * 5.);
+        let player_spawn_pos = glam::Vec2::new(tile_size * map.spawn.x, tile_size * map.spawn.y);
         let player =
             player::Player::new(player_spawn_pos.x, player_spawn_pos.y, 25., 25., id_manager);
 
@@ -106,7 +106,7 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
             // Update the monsters
             self.monster_manager
                 .update(glam::Vec2::from(self.player.hitbox.center()));
-            self.monster_manager.update_movements(
+            /*self.monster_manager.update_movements(
                 dt,
                 &self.map.bloc_list,
                 (
@@ -114,7 +114,7 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
                     self.map.ghost_tiles.clone(),
                     self.map.tile_size,
                 ),
-            );
+            );*/
             // self.map.bloc_effects(&self.monster_manager.monster_list);
             for index in 0..self.monster_manager.monster_list.len() {
                 self.map
@@ -164,8 +164,12 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
             ggez::event::KeyCode::Q => self.player.inputs.left = true,
             ggez::event::KeyCode::D => self.player.inputs.right = true,
             ggez::event::KeyCode::E => {
-                self.map.difficulty += 1;
-                self.map.gen_new_map(ctx, self.id_manager).unwrap();
+                if ((self.player.hitbox.x/self.map.tile_size).ceil() == self.map.end.x.ceil()) && ((self.player.hitbox.y/self.map.tile_size).ceil() == self.map.end.y.ceil()) {
+                    self.map.difficulty += 1;
+                    self.map.gen_new_map(ctx, self.id_manager).unwrap();
+                    self.player.hitbox.x = self.map.spawn.x * self.map.tile_size;
+                    self.player.hitbox.y = self.map.spawn.y * self.map.tile_size;
+                }
             }
             ggez::event::KeyCode::Escape => {
                 if !self.menu.show_main && !self.menu.show_settings {
@@ -181,10 +185,6 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
                 }
             }
             ggez::event::KeyCode::P => {
-                let player_pos = (
-                    self.player.hitbox.center().x / self.map.tile_size,
-                    self.player.hitbox.center().y / self.map.tile_size,
-                );
                 let wanted_pos = (1000., 1000.);
                 let path = physics::PathFinding::Astar(
                     glam::Vec2::from(self.player.hitbox.center()),

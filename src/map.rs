@@ -21,7 +21,7 @@ pub struct Map {
     pub diag_size: f32,
     pub image_hashmap: HashMap<i32, ggez::graphics::spritebatch::SpriteBatch>,
     pub difficulty: u32,
-    pub start: Vec2,
+    pub spawn: Vec2,
     pub end: Vec2,
 }
 
@@ -44,7 +44,7 @@ impl Map {
             diag_size: 0.,
             image_hashmap: HashMap::new(),
             difficulty: 0,
-            start: Vec2::new(0., 0.),
+            spawn: Vec2::new(0., 0.),
             end: Vec2::new(0., 0.),
         }
     }
@@ -161,6 +161,8 @@ impl Map {
                     start_end_found = true;
                     map_vec[start.1][start.0] = 20;
                     map_vec[end.1][end.0] = 21;
+                    self.spawn = Vec2::from((start.0 as f32, start.1 as f32));
+                    self.end = Vec2::from((end.0 as f32, end.1 as f32));
                 },
                 physics::PathFindingResult::Fail => start_end_found = false,
             };
