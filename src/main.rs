@@ -176,9 +176,9 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
                     self.player.hitbox.center().x / self.map.tile_size,
                     self.player.hitbox.center().y / self.map.tile_size,
                 );
-                let wanted_pos = (100. / self.map.tile_size, 100. / self.map.tile_size);
+                let wanted_pos = (1000., 1000.);
                 let path = physics::PathFinding::Astar(
-                    glam::Vec2::from(player_pos),
+                    glam::Vec2::from(self.player.hitbox.center()),
                     glam::Vec2::from(wanted_pos),
                     (
                         self.map.map_file_content.clone(),

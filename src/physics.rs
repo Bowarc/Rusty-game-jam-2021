@@ -563,19 +563,33 @@ impl PathFinding {
         map_infos: (Vec<Vec<i32>>, Vec<f32>, f32),
     ) -> PathFindingResult {
         // Preparation
-        let mut grid =
-            PathFinding::construct_pf_grid(map_infos.clone(), entity_position, desired_position);
-        let grid_size = glam::Vec2::new((grid.len() as i32) as f32, grid[0].len() as f32);
-
         let tile_size = map_infos.2;
 
-        let start_node = grid[entity_position.y as usize][entity_position.x as usize].clone();
+        let shifted_entity_position =
+            glam::Vec2::new(entity_position.x / tile_size, entity_position.y / tile_size);
+
+        let shifted_desired_pos = glam::Vec2::new(
+            desired_position.x / tile_size,
+            desired_position.y / tile_size,
+        );
+
+        let mut grid = PathFinding::construct_pf_grid(
+            map_infos.clone(),
+            shifted_entity_position,
+            shifted_desired_pos,
+        );
+
+        let grid_size = glam::Vec2::new((grid.len() as i32) as f32, grid[0].len() as f32);
+
+        let start_node =
+            grid[shifted_entity_position.y as usize][shifted_entity_position.x as usize].clone();
 
         let mut target_node =
-            grid[desired_position.y as usize][desired_position.x as usize].clone();
+            grid[shifted_desired_pos.y as usize][shifted_desired_pos.x as usize].clone();
 
         let mut found = false;
 
+        // actual pathfinding
         if target_node.transparent {
             let mut to_see_heap: std::collections::BinaryHeap<PathFindingNode> =
                 std::collections::BinaryHeap::new();

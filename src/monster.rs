@@ -1,5 +1,4 @@
-// use crate::bloc::Bloc;
-use crate::{id, physics};
+use crate::{bloc, id, physics};
 use ggez;
 use glam;
 use rand::Rng;
@@ -19,6 +18,7 @@ pub struct Brain {
     pub large_vision_circle: physics::Circle,
     pub vision_cone: (f32, f32),
     pub see_something: bool,
+    pub wandering_path: Vec<(glam::Vec2)>,
 }
 
 pub struct MonsterManager {
@@ -33,83 +33,6 @@ pub struct TestBot {
     pub los: physics::LOS,
     pub brain: Brain,
 }
-
-impl Brain {
-    pub fn new() -> Self {
-        let iq = rand::thread_rng().gen_range(60..160);
-        Brain {
-            iq: iq,
-            close_vision_circle: physics::Circle::new(glam::Vec2::ZERO, 0.),
-            large_vision_circle: physics::Circle::new(glam::Vec2::ZERO, 0.),
-            vision_cone: (0., 0.),
-            see_something: false,
-        }
-    }
-    pub fn update(&mut self, entity_pos: glam::Vec2, entity_angle: f32) {
-        let usable_angle = entity_angle;
-
-        self.vision_cone = (
-            usable_angle - (VISION_CONE.to_radians() / 2.),
-            usable_angle + (VISION_CONE.to_radians() / 2.),
-        );
-
-        self.close_vision_circle = physics::Circle::new(entity_pos, self.iq as f32);
-
-        self.large_vision_circle = physics::Circle::new(entity_pos, (self.iq * 3) as f32);
-    }
-    pub fn can_see(&mut self, entity_pos: glam::Vec2, point: glam::Vec2) -> bool {
-        //  Generate the view area
-        //  https://cdn.discordapp.com/attachments/406461353537175573/880003880681869342/unknown.png
-        //
-
-        let mut result = false;
-        if physics::CheckCollision::point_in_circle(point, self.close_vision_circle) {
-            // In the little circle
-            result = true;
-        }
-        if !result {
-            if physics::CheckCollision::point_in_circle(point, self.large_vision_circle) {
-                let mut angle_entity_point = physics::two_points_angle(entity_pos, point).to_degrees();
-                let mut cone: (f32, f32) = (self.vision_cone.0.to_degrees(), self.vision_cone.1.to_degrees());
-                if cone.0 < 0. {
-                    cone.0 = cone.0 + 360.;
-                }
-                if cone.1 < 0. {
-                    cone.1 = cone.1 + 360.;
-                }
-                if angle_entity_point < 0. {
-                    angle_entity_point = angle_entity_point + 360.;
-                }
-                println!(
-                    "Vision cone: {}, {}.\n angle player: {}",
-                    cone.0, cone.1, angle_entity_point
-                );
-                let condition2 = (cone.0 < angle_entity_point
-                    && angle_entity_point < cone.1) || (cone.1 < cone.0 && ((cone.0 < angle_entity_point && angle_entity_point > 0.) || (angle_entity_point < cone.1 && angle_entity_point >= 0.)));
-                if condition2 {
-                    // In the vision cone
-                    result = true;
-                } else {
-                    // Not in the vision cone
-                    result = false;
-                }
-            } else {
-                // Not in the outside circle
-                result = false
-            }
-        }
-        if result {
-            // println!("I SEE YOUUUU");
-            self.see_something = true
-        } else {
-            // println!("WHEEERREE AAARRREE YOUUUUU");
-            self.see_something = false
-        }
-
-        result
-    }
-}
-
 impl MonsterManager {
     pub fn new() -> Self {
         MonsterManager {
@@ -139,6 +62,26 @@ impl MonsterManager {
         for i in 0..self.monster_list.len() {
             match &mut self.monster_list[i] {
                 Monster::TestBot(tb) => tb.update(player_pos),
+            }
+        }
+    }
+    pub fn update_movements(
+        &mut self,
+        dt: f32,
+        bloc_list: &Vec<bloc::Bloc>,
+        map_infos: (Vec<Vec<i32>>, Vec<f32>, f32),
+    ) {
+        let mut pathfinding_count = 0;
+        let pathfinding_threshold = 3;
+
+        for i in 0..self.monster_list.len() {
+            match &mut self.monster_list[i] {
+                Monster::TestBot(tb) => {
+                    if tb.brain.wandering_path.is_empty() {
+                        // self.generate_pathfinding(tb.hitbox)
+                    }
+                    tb.update_movements(dt, bloc_list);
+                }
             }
         }
     }
@@ -243,6 +186,89 @@ impl MonsterManager {
     }
 }
 
+impl Brain {
+    pub fn new() -> Self {
+        let iq = rand::thread_rng().gen_range(60..160);
+        Brain {
+            iq: iq,
+            close_vision_circle: physics::Circle::new(glam::Vec2::ZERO, 0.),
+            large_vision_circle: physics::Circle::new(glam::Vec2::ZERO, 0.),
+            vision_cone: (0., 0.),
+            see_something: false,
+            wandering_path: Vec::new(),
+        }
+    }
+    pub fn update(&mut self, entity_pos: glam::Vec2, entity_angle: f32) {
+        let usable_angle = entity_angle;
+
+        self.vision_cone = (
+            usable_angle - (VISION_CONE.to_radians() / 2.),
+            usable_angle + (VISION_CONE.to_radians() / 2.),
+        );
+
+        self.close_vision_circle = physics::Circle::new(entity_pos, self.iq as f32);
+
+        self.large_vision_circle = physics::Circle::new(entity_pos, (self.iq * 3) as f32);
+    }
+    pub fn can_see(&mut self, entity_pos: glam::Vec2, point: glam::Vec2) -> bool {
+        //  Generate the view area
+        //  https://cdn.discordapp.com/attachments/406461353537175573/880003880681869342/unknown.png
+        //
+
+        let mut result = false;
+        if physics::CheckCollision::point_in_circle(point, self.close_vision_circle) {
+            // In the little circle
+            result = true;
+        }
+        if !result {
+            if physics::CheckCollision::point_in_circle(point, self.large_vision_circle) {
+                let mut angle_entity_point =
+                    physics::two_points_angle(entity_pos, point).to_degrees();
+                let mut cone: (f32, f32) = (
+                    self.vision_cone.0.to_degrees(),
+                    self.vision_cone.1.to_degrees(),
+                );
+                if cone.0 < 0. {
+                    cone.0 = cone.0 + 360.;
+                }
+                if cone.1 < 0. {
+                    cone.1 = cone.1 + 360.;
+                }
+                if angle_entity_point < 0. {
+                    angle_entity_point = angle_entity_point + 360.;
+                }
+                // println!(
+                //     "Vision cone: {}, {}.\n angle player: {}",
+                //     cone.0, cone.1, angle_entity_point
+                // );
+                let condition2 = (cone.0 < angle_entity_point && angle_entity_point < cone.1)
+                    || (cone.1 < cone.0
+                        && ((cone.0 < angle_entity_point && angle_entity_point > 0.)
+                            || (angle_entity_point < cone.1 && angle_entity_point >= 0.)));
+                if condition2 {
+                    // In the vision cone
+                    result = true;
+                } else {
+                    // Not in the vision cone
+                    result = false;
+                }
+            } else {
+                // Not in the outside circle
+                result = false
+            }
+        }
+        if result {
+            // println!("I SEE YOUUUU");
+            self.see_something = true
+        } else {
+            // println!("WHEEERREE AAARRREE YOUUUUU");
+            self.see_something = false
+        }
+
+        result
+    }
+}
+
 impl TestBot {
     pub fn new(x: f32, y: f32, w: f32, h: f32, id: i32, mut brain: Brain) -> Self {
         let hitbox = ggez::graphics::Rect::new(x, y, w, h);
@@ -284,6 +310,54 @@ impl TestBot {
             .update(glam::Vec2::from(self.hitbox.center()), self.los.angle);
         self.brain
             .can_see(glam::Vec2::from(self.hitbox.center()), player_pos);
+    }
+    pub fn update_movements(&mut self, dt: f32, bloc_list: &Vec<bloc::Bloc>) {
+        if !self.brain.wandering_path.is_empty() {
+            let desired_position = self.brain.wandering_path[0];
+
+            let my_pos = self.hitbox.center();
+
+            let mut direction =
+                glam::Vec2::new(desired_position.x - my_pos.x, desired_position.y - my_pos.y);
+
+            let mut delta_pos = self.hitbox.clone();
+
+            direction = physics::normalize_point(direction);
+
+            let mut speed = TEST_BOT_SPEED * dt;
+
+            let distance_to_desired_position =
+                physics::RayCasting::get_distance(glam::Vec2::from(my_pos), desired_position);
+
+            if distance_to_desired_position < speed {
+                speed = distance_to_desired_position;
+            }
+
+            delta_pos.x += direction.x * speed;
+            delta_pos.y += direction.y * speed;
+
+            let new_hitbox = physics::CheckCollision::world_collision(
+                self.hitbox,
+                glam::Vec2::new(delta_pos.x, delta_pos.y),
+                &bloc_list,
+            );
+
+            if self.hitbox == new_hitbox && !self.brain.wandering_path.is_empty() {
+                println!("DOOOOR STUCK, id: {}", self.id);
+                self.brain.wandering_path = Vec::new();
+            } else {
+                self.hitbox = new_hitbox;
+            }
+        }
+        if !self.brain.wandering_path.is_empty() {
+            let d = physics::RayCasting::get_distance(
+                glam::Vec2::from(self.hitbox.center()),
+                self.brain.wandering_path[0],
+            );
+            if d < 1. {
+                self.brain.wandering_path.remove(0);
+            }
+        };
     }
 }
 
