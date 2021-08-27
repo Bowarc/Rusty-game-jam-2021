@@ -307,19 +307,57 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
     fn gamepad_button_down_event(
         &mut self,
         _ctx: &mut ggez::Context,
-        _btn: ggez::event::Button,
+        btn: ggez::event::Button,
         _id: ggez::input::gamepad::GamepadId,
     ) {
-        println!("ctx: {:#?}\nbtn: {:#?}\nbid: {:#?}\n", _ctx, _btn, _id);
+        match btn {
+            ggez::event::Button::South => self.player.inputs.controler_south = true,
+            ggez::event::Button::North => self.player.inputs.controler_north = true,
+            ggez::event::Button::East => self.player.inputs.controler_east = true,
+            ggez::event::Button::West => self.player.inputs.controler_west = true,
+            ggez::event::Button::Select => self.player.inputs.controler_select = true,
+            ggez::event::Button::Start => self.player.inputs.controler_start = true,
+            ggez::event::Button::Mode => self.player.inputs.controler_mode = true,
+            ggez::event::Button::RightTrigger => self.player.inputs.controler_right_trigger_1 = true,
+            ggez::event::Button::LeftTrigger => self.player.inputs.controler_left_trigger_1 = true,
+            ggez::event::Button::RightTrigger2 => self.player.inputs.controler_right_trigger_2 = true,
+            ggez::event::Button::LeftTrigger2 => self.player.inputs.controler_left_trigger_2 = true,
+            ggez::event::Button::DPadRight => self.player.inputs.controler_dpad_right = true,
+            ggez::event::Button::DPadUp => self.player.inputs.controler_dpad_up = true,
+            ggez::event::Button::DPadLeft => self.player.inputs.controler_dpad_left = true,
+            ggez::event::Button::DPadDown => self.player.inputs.controler_dpad_down = true,
+            ggez::event::Button::LeftThumb => self.player.inputs.controler_left_thumb = true,
+            ggez::event::Button::RightThumb => self.player.inputs.controler_right_thumb = true,
+            _ => (),
+        }
     }
 
     fn gamepad_button_up_event(
         &mut self,
         _ctx: &mut ggez::Context,
-        _btn: ggez::event::Button,
+        btn: ggez::event::Button,
         _id: ggez::input::gamepad::GamepadId,
     ) {
-        println!("{:?}, {:?}", _btn, _id);
+        match btn {
+            ggez::event::Button::South => self.player.inputs.controler_south = false,
+            ggez::event::Button::North => self.player.inputs.controler_north = false,
+            ggez::event::Button::East => self.player.inputs.controler_east = false,
+            ggez::event::Button::West => self.player.inputs.controler_west = false,
+            ggez::event::Button::Select => self.player.inputs.controler_select = false,
+            ggez::event::Button::Start => self.player.inputs.controler_start = false,
+            ggez::event::Button::Mode => self.player.inputs.controler_mode = false,
+            ggez::event::Button::RightTrigger => self.player.inputs.controler_right_trigger_1 = false,
+            ggez::event::Button::LeftTrigger => self.player.inputs.controler_left_trigger_1 = false,
+            ggez::event::Button::RightTrigger2 => self.player.inputs.controler_right_trigger_2 = false,
+            ggez::event::Button::LeftTrigger2 => self.player.inputs.controler_left_trigger_2 = false,
+            ggez::event::Button::DPadRight => self.player.inputs.controler_dpad_right = false,
+            ggez::event::Button::DPadUp => self.player.inputs.controler_dpad_up = false,
+            ggez::event::Button::DPadLeft => self.player.inputs.controler_dpad_left = false,
+            ggez::event::Button::DPadDown => self.player.inputs.controler_dpad_down = false,
+            ggez::event::Button::LeftThumb => self.player.inputs.controler_left_thumb = false,
+            ggez::event::Button::RightThumb => self.player.inputs.controler_right_thumb = false,
+            _ => (),
+        }
     }
 
     fn gamepad_axis_event(
