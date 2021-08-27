@@ -186,36 +186,30 @@ impl Player {
     ) -> weapon::ObjectDrop {
         let mut dropped_item = weapon::ObjectDrop::None;
 
-        match self.los.result.clone() {
-            physics::RayCastResult::Ok(_line, object, _dist) => match object {
-                physics::RayCastBlocType::Bloc(_bloc_index) => {}
-                physics::RayCastBlocType::Monster(monster_index) => {
-                    if self.inventory.index_is_weapon() {
-                        match &mut self.inventory.weapon_list[self.inventory.selected_index] {
-                            weapon::Weapon::Pistol(p) => {
-                                if p.can_shoot() {
-                                    self.shot_sound.play(ctx);
+        if self.inventory.index_is_weapon() {
+            match &mut self.inventory.weapon_list[self.inventory.selected_index] {
+                weapon::Weapon::Pistol(p) => {
+                    if p.can_shoot() {
+                        self.shot_sound.play(ctx).unwrap();
+                        match self.los.result.clone() {
+                            physics::RayCastResult::Ok(_line, object, _dist) => match object {
+                                physics::RayCastBlocType::Monster(monster_index) => {
                                     dropped_item = monster_manager.damage_monster_isdead(
                                         monster_index,
                                         p.damage,
                                         id_manager,
                                     );
                                 }
-                                // self.inventory.weapon_list[self.inventory.selected_index] =
-                                // weapon::Weapon::Pistol(p);
-                            }
-                            _ => {
-                                println!("You have no weapon !")
-                            }
+                                _ => {}
+                            },
+                            physics::RayCastResult::Fail => {}
                         }
-                    } else {
-                        println!("The selected weapon can't shoot");
                     }
                 }
                 _ => {}
-            },
-            physics::RayCastResult::Fail => {}
-        };
+            }
+        }
+
         dropped_item
     }
 }
