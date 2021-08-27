@@ -186,7 +186,7 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
             0,
         );
 
-        let mut hp_text_fragment = ggez::graphics::TextFragment::new(hp_str).color(player_hp_color);
+        let hp_text_fragment = ggez::graphics::TextFragment::new(hp_str).color(player_hp_color);
         let level_display = ggez::graphics::Text::new((level_str, font, 32.0));
         let hp_display = ggez::graphics::Text::new((hp_text_fragment, font, 32.0));
         ggez::graphics::draw(
