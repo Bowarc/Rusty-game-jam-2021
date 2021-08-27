@@ -170,16 +170,23 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
         let level_dest = glam::Vec2::new(10.0, 10.0);
         let hp_dest = glam::Vec2::new(200.0, 10.0);
 
-        // r = min(255, 255 - (255 * ((self.hp - (self.MaxHP - self.hp)) / self.MaxHP)))
-        // g = min(255, 255 * (self.hp / (self.MaxHP / 2)))
-        // color = (r, g, 0)
-
         let level_str = format!("Level: {}", self.map.difficulty);
         let hp_str = format!("HP: {}", self.player.hp);
         let font = ggez::graphics::Font::new(ctx, "/LiberationMono-Regular.ttf")?;
 
-        let mut hp_text_fragment = ggez::graphics::TextFragment::new(hp_str.clone());
-        hp_text_fragment.color(ggez::graphics::Color::RED);
+        // r = min(255, 255 - (255 * ((self.hp - (self.MaxHP - self.hp)) / self.MaxHP)))
+        // g = min(255, 255 * (self.hp / (self.MaxHP / 2)))
+        // color = (r, g, 0)
+        let player_hp_color = ggez::graphics::Color::from_rgb(
+            std::cmp::min(
+                255,
+                (255 - (255 * ((self.player.hp - (100 - self.player.hp)) / 100))) as u8,
+            ),
+            std::cmp::min(255, (255 * (self.player.hp / (100 / 2))) as u8),
+            0,
+        );
+
+        let mut hp_text_fragment = ggez::graphics::TextFragment::new(hp_str).color(player_hp_color);
         let level_display = ggez::graphics::Text::new((level_str, font, 32.0));
         let hp_display = ggez::graphics::Text::new((hp_text_fragment, font, 32.0));
         ggez::graphics::draw(
@@ -224,7 +231,6 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
                     self.map.end.y * self.map.tile_size + (self.map.tile_size / 2.),
                 ),
             );
-
             if distance_from_end < self.map.tile_size {
                 self.map.difficulty += 1;
                 self.map.gen_new_map(ctx, self.id_manager).unwrap();
