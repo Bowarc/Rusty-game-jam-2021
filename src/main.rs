@@ -229,6 +229,7 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
         )?;
 
         ggez::graphics::present(ctx)?;
+        ggez::timer::yield_now();
         Ok(())
     }
     fn key_down_event(
