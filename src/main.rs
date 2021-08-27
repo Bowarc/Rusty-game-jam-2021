@@ -1,3 +1,4 @@
+#![deny(unsafe_code)]
 use ggez;
 use glam;
 
