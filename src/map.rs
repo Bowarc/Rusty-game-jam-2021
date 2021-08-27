@@ -1,9 +1,9 @@
 use ggez;
+use glam::Vec2;
 use noise::{
     utils::{NoiseMapBuilder, PlaneMapBuilder},
     Seedable, SuperSimplex,
 };
-use glam::Vec2;
 use rand::Rng;
 use std::collections::HashMap;
 use std::time::SystemTime;
@@ -140,22 +140,21 @@ impl Map {
         while !start_end_found {
             start = (
                 rng.gen_range(1..MAP_WIDTH / 2),
-                rng.gen_range(1..MAP_HEIGHT / 2)
+                rng.gen_range(1..MAP_HEIGHT / 2),
             );
             end = (
                 rng.gen_range(MAP_WIDTH / 2..MAP_WIDTH - 1),
-                rng.gen_range(MAP_HEIGHT / 2..MAP_HEIGHT - 1)
+                rng.gen_range(MAP_HEIGHT / 2..MAP_HEIGHT - 1),
             );
-            let start_pos = (start.0 as f32 * self.tile_size, start.1 as f32 * self.tile_size);
+            let start_pos = (
+                start.0 as f32 * self.tile_size,
+                start.1 as f32 * self.tile_size,
+            );
             let end_pos = (end.0 as f32 * self.tile_size, end.1 as f32 * self.tile_size);
-            match physics::PathFinding::Astar(
+            match physics::PathFinding::astar(
                 Vec2::from(start_pos),
                 Vec2::from(end_pos),
-                (
-                    map_vec.clone(),
-                    self.ghost_tiles.clone(),
-                    self.tile_size,
-                ),
+                (map_vec.clone(), self.ghost_tiles.clone(), self.tile_size),
             ) {
                 physics::PathFindingResult::Ok(_) => {
                     start_end_found = true;
@@ -163,7 +162,7 @@ impl Map {
                     map_vec[end.1][end.0] = 21;
                     self.spawn = Vec2::from((start.0 as f32, start.1 as f32));
                     self.end = Vec2::from((end.0 as f32, end.1 as f32));
-                },
+                }
                 physics::PathFindingResult::Fail => start_end_found = false,
             };
         }

@@ -1,6 +1,6 @@
 use crate::physics::Pos2D;
-use ggez::event::KeyCode;
 use egui::Key;
+use ggez::event::KeyCode;
 
 #[derive(Default)]
 pub struct Input {
@@ -11,6 +11,8 @@ pub struct Input {
     pub pointing: Pos2D<f32>,
     pub rightpad: Pos2D<i32>,
     pub gamepad: bool,
+    pub mouse_left: bool,
+    pub mouse_right: bool,
 }
 
 pub struct KeyMap {

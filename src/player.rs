@@ -1,6 +1,6 @@
 use ggez;
 
-use crate::{bloc, id, input, monster, physics};
+use crate::{bloc, id, input, monster, physics, weapon};
 
 const PLAYER_SPEED: f32 = 400.;
 const PLAYER_BASE_HP: i32 = 100;
@@ -13,6 +13,7 @@ pub struct Player {
     pub inputs: input::Input,
     pub speed: f32,
     pub los: physics::LOS,
+    pub inventory: weapon::WeaponInventory,
 }
 
 impl Player {
@@ -25,9 +26,16 @@ impl Player {
             inputs: input::Input::default(),
             speed: PLAYER_SPEED,
             los: physics::LOS::default(),
+            inventory: weapon::WeaponInventory::new(id_manager),
         }
     }
-    pub fn update_movements(&mut self, bloclist: &mut Vec<bloc::Bloc>, dt: f32) {
+    pub fn update_movements(
+        &mut self,
+        bloclist: &mut Vec<bloc::Bloc>,
+        dt: f32,
+        id_manager: id::IdManager,
+        monster_manager: &mut monster::MonsterManager,
+    ) {
         let mut dir = glam::Vec2::ZERO;
         let mut delta_pos = glam::Vec2::ZERO;
         if self.inputs.up {
@@ -46,6 +54,10 @@ impl Player {
         delta_pos.x += dir.x * (self.speed * dt);
         delta_pos.y += dir.y * (self.speed * dt);
         self.hitbox = physics::CheckCollision::world_collision(self.hitbox, delta_pos, bloclist);
+
+        if self.inputs.mouse_left {
+            self.shoot(id_manager, monster_manager);
+        }
         // println!("x: {}, y: {}", self.hitbox.x, self.hitbox.y);
     }
     pub fn update_los(
@@ -135,12 +147,66 @@ impl Player {
         )?;
         Ok(())
     }
-    pub fn take_damages(&mut self, damage: i32) {
+    pub fn take_damages(&mut self, damage: i32) -> bool {
         self.hp -= damage;
         println!("Player's hp: {}", self.hp);
         if self.hp < 1 {
             println!("Player is supposed to be dead");
+            true
+        } else {
+            false
         }
+    }
+    pub fn shoot(
+        &mut self,
+        id_manager: id::IdManager,
+        monster_manager: &mut monster::MonsterManager,
+    ) -> weapon::ObjectDrop {
+        println!("Shot! ");
+        let mut dropped_item = weapon::ObjectDrop::None;
+
+        let a = match self.los.result.clone() {
+            physics::RayCastResult::Ok(line, object, _dist) => {
+                match object {
+                    physics::RayCastBlocType::Bloc(bloc_index) => {
+                        // match &mut bloc_list[bloc_index]{
+                        //     _ => {
+                        //         // Damage the bloc or something idc
+                        //     }
+                        // }
+                    }
+                    physics::RayCastBlocType::Monster(monster_index) => {
+                        if self.inventory.index_is_weapon() {
+                            println!("Great shot! ");
+                            match self.inventory.weapon_list[self.inventory.selected_index] {
+                                weapon::Weapon::Pistol(mut p) => {
+                                    if p.can_shoot() {
+                                        dropped_item = monster_manager.damage_monster_isdead(
+                                            monster_index,
+                                            p.damage,
+                                            id_manager,
+                                        );
+                                    }
+                                }
+                                _ => {
+                                    println!("You have no weapon !")
+                                }
+                            }
+                        } else {
+                            println!("This");
+                        }
+                    }
+                    _ => {
+                        println!("You missed")
+                    }
+                }
+            }
+            physics::RayCastResult::Fail => {
+                println!("Failed")
+            }
+        };
+        dropped_item
+        // weapon::ObjectDrop::None
     }
 }
 

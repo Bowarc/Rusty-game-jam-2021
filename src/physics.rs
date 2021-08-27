@@ -17,7 +17,7 @@ pub trait EntityTrait {
 #[derive(Debug, Clone)]
 pub enum RayCastBlocType {
     Bloc(usize),
-    Bot(usize),
+    Monster(usize),
     Player(usize),
     Other,
 }
@@ -424,7 +424,7 @@ impl RayCasting {
     pub fn ray_cast_tile_monster(
         los: (glam::Vec2, glam::Vec2),
         blocs: &Vec<bloc::Bloc>,
-        bots: &Vec<monster::Monster>,
+        monsters: &Vec<monster::Monster>,
     ) -> RayCastResult {
         // let malist: Vec<RayCastBlocType> = vec![RayCastBlocType::Wall, RayCastBlocType::Other];
         let mut min_d = RayCasting::get_distance(los.0, los.1);
@@ -445,17 +445,18 @@ impl RayCasting {
             );
             hit_type = RayCastBlocType::Bloc(tile_index.unwrap());
         }
-        let (bot_shot, bot_index, bot_is_hit) = RayCasting::ray_cast(tile_shot, bots);
-        if bot_is_hit {
+        let (monster_shot, monster_index, monster_is_hit) =
+            RayCasting::ray_cast(tile_shot, monsters);
+        if monster_is_hit {
             is_hit = true;
-            let d = RayCasting::get_distance(bot_shot.0, bot_shot.1);
+            let d = RayCasting::get_distance(monster_shot.0, monster_shot.1);
             if d < min_d {
                 // the if bot is closes to the player than the tile
                 min_d = d;
-                hit_type = RayCastBlocType::Bot(bot_index.unwrap());
+                hit_type = RayCastBlocType::Monster(monster_index.unwrap());
                 new_los = (
                     glam::Vec2::new(los.0.x, los.0.y),
-                    glam::Vec2::new(bot_shot.1.x, bot_shot.1.y),
+                    glam::Vec2::new(monster_shot.1.x, monster_shot.1.y),
                 );
             }
         };
@@ -559,7 +560,7 @@ impl PathFinding {
         }
         grid
     }
-    pub fn Astar(
+    pub fn astar(
         entity_position: glam::Vec2,
         desired_position: glam::Vec2,
         map_infos: (Vec<Vec<i32>>, Vec<f32>, f32),
@@ -701,9 +702,9 @@ impl PathFinding {
         }
         neighbours
     }
-    fn get_distance(nodeA: (i32, i32), nodeB: (i32, i32)) -> i32 {
-        let dist_x = (nodeA.0 - nodeB.0).abs();
-        let dist_y = (nodeA.1 - nodeB.1).abs();
+    fn get_distance(node_a: (i32, i32), node_b: (i32, i32)) -> i32 {
+        let dist_x = (node_a.0 - node_b.0).abs();
+        let dist_y = (node_a.1 - node_b.1).abs();
 
         if dist_x < dist_y {
             14 * dist_y + 10 * (dist_x - dist_y)

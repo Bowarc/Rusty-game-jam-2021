@@ -1,4 +1,4 @@
-use crate::{bloc, id, physics};
+use crate::{bloc, id, physics, weapon};
 use ggez;
 use glam;
 use rand::Rng;
@@ -92,7 +92,7 @@ impl MonsterManager {
                                 1. * map_infos.2..(map_infos.0.len() as f32 - 1.) * map_infos.2,
                             ),
                         );
-                        let path_result = physics::PathFinding::Astar(
+                        let path_result = physics::PathFinding::astar(
                             glam::Vec2::from(tb.hitbox.center()),
                             random_desired_pos,
                             map_infos.clone(),
@@ -112,93 +112,119 @@ impl MonsterManager {
         }
     }
 
+    pub fn damage_monster_isdead(
+        &mut self,
+        monster_index: usize,
+        damage: i32,
+        id_manager: id::IdManager,
+    ) -> weapon::ObjectDrop {
+        let mut monster_is_dead = false;
+
+        let drop: weapon::ObjectDrop;
+
+        match &mut self.monster_list[monster_index] {
+            Monster::TestBot(tb) => {
+                tb.take_damages(damage);
+                println!("Bot with id: {} has been damaged", tb.id);
+                if tb.is_dead() {
+                    monster_is_dead = true;
+                };
+                drop = weapon::generate_drop(id_manager);
+            }
+        }
+        if monster_is_dead {
+            self.monster_list.swap_remove(monster_index);
+        }
+        drop
+    }
+
     pub fn draw_monsters(
         &self,
         ctx: &mut ggez::Context,
         draw_offset: glam::Vec2,
     ) -> ggez::GameResult {
-        let mut hitbox_mesh = ggez::graphics::MeshBuilder::new();
-        let mut vision_circles_mesh = ggez::graphics::MeshBuilder::new();
-
-        for i in 0..self.monster_list.len() {
-            let monster_hitbox = physics::EntityTrait::get_hitbox(&self.monster_list[i]);
-            let hitbox_lines = physics::rotate_square(
-                physics::EntityTrait::get_hitbox(&self.monster_list[i]),
-                physics::EntityTrait::get_angle(&self.monster_list[i]),
-            );
-
-            let (close_circle, large_circle, vision_cone, iq, see_something) =
-                match &self.monster_list[i] {
-                    Monster::TestBot(tb) => (
-                        tb.brain.close_vision_circle,
-                        tb.brain.large_vision_circle,
-                        tb.brain.vision_cone,
-                        tb.brain.iq,
-                        tb.brain.see_something,
-                    ),
-                };
-
-            let accent_color: ggez::graphics::Color;
-            if see_something {
-                accent_color = ggez::graphics::Color::RED;
-            } else {
-                accent_color = ggez::graphics::Color::WHITE;
-            }
-            let cone_0_endpoint_r: glam::Vec2 = physics::rotate_line(
-                glam::Vec2::from(monster_hitbox.center()),
-                glam::Vec2::new(
-                    monster_hitbox.x + iq as f32 * 3. + monster_hitbox.w / 2.,
-                    monster_hitbox.y + monster_hitbox.h / 2.,
-                ),
-                vision_cone.0,
-            );
-
-            let cone_1_endpoint_r: glam::Vec2 = physics::rotate_line(
-                glam::Vec2::from(monster_hitbox.center()),
-                glam::Vec2::new(
-                    monster_hitbox.x + iq as f32 * 3. + monster_hitbox.w / 2.,
-                    monster_hitbox.y + monster_hitbox.h / 2.,
-                ),
-                vision_cone.1,
-            );
-
-            hitbox_mesh.polyline(
-                ggez::graphics::DrawMode::stroke(1.),
-                &hitbox_lines,
-                accent_color,
-            )?;
-
-            vision_circles_mesh.circle(
-                ggez::graphics::DrawMode::stroke(2.),
-                close_circle.center,
-                close_circle.radius,
-                0.1,
-                ggez::graphics::Color::WHITE,
-            )?;
-            vision_circles_mesh.circle(
-                ggez::graphics::DrawMode::stroke(2.),
-                large_circle.center,
-                large_circle.radius,
-                0.1,
-                ggez::graphics::Color::WHITE,
-            )?;
-            vision_circles_mesh.line(
-                &[glam::Vec2::from(monster_hitbox.center()), cone_0_endpoint_r],
-                1.,
-                ggez::graphics::Color::WHITE,
-            )?;
-            vision_circles_mesh.line(
-                &[glam::Vec2::from(monster_hitbox.center()), cone_1_endpoint_r],
-                1.,
-                ggez::graphics::Color::WHITE,
-            )?;
-        }
-
-        let builded_hitbox_mesh = hitbox_mesh.build(ctx)?;
-
-        let builded_vision_mesh = vision_circles_mesh.build(ctx)?;
-
         if !self.monster_list.is_empty() {
+            let mut hitbox_mesh = ggez::graphics::MeshBuilder::new();
+            let mut vision_circles_mesh = ggez::graphics::MeshBuilder::new();
+
+            for i in 0..self.monster_list.len() {
+                let monster_hitbox = physics::EntityTrait::get_hitbox(&self.monster_list[i]);
+                let hitbox_lines = physics::rotate_square(
+                    physics::EntityTrait::get_hitbox(&self.monster_list[i]),
+                    physics::EntityTrait::get_angle(&self.monster_list[i]),
+                );
+
+                let (close_circle, large_circle, vision_cone, iq, see_something) =
+                    match &self.monster_list[i] {
+                        Monster::TestBot(tb) => (
+                            tb.brain.close_vision_circle,
+                            tb.brain.large_vision_circle,
+                            tb.brain.vision_cone,
+                            tb.brain.iq,
+                            tb.brain.see_something,
+                        ),
+                    };
+
+                let accent_color: ggez::graphics::Color;
+                if see_something {
+                    accent_color = ggez::graphics::Color::RED;
+                } else {
+                    accent_color = ggez::graphics::Color::WHITE;
+                }
+                let cone_0_endpoint_r: glam::Vec2 = physics::rotate_line(
+                    glam::Vec2::from(monster_hitbox.center()),
+                    glam::Vec2::new(
+                        monster_hitbox.x + iq as f32 * 3. + monster_hitbox.w / 2.,
+                        monster_hitbox.y + monster_hitbox.h / 2.,
+                    ),
+                    vision_cone.0,
+                );
+
+                let cone_1_endpoint_r: glam::Vec2 = physics::rotate_line(
+                    glam::Vec2::from(monster_hitbox.center()),
+                    glam::Vec2::new(
+                        monster_hitbox.x + iq as f32 * 3. + monster_hitbox.w / 2.,
+                        monster_hitbox.y + monster_hitbox.h / 2.,
+                    ),
+                    vision_cone.1,
+                );
+
+                hitbox_mesh.polyline(
+                    ggez::graphics::DrawMode::stroke(1.),
+                    &hitbox_lines,
+                    accent_color,
+                )?;
+
+                vision_circles_mesh.circle(
+                    ggez::graphics::DrawMode::stroke(2.),
+                    close_circle.center,
+                    close_circle.radius,
+                    0.1,
+                    ggez::graphics::Color::WHITE,
+                )?;
+                vision_circles_mesh.circle(
+                    ggez::graphics::DrawMode::stroke(2.),
+                    large_circle.center,
+                    large_circle.radius,
+                    0.1,
+                    ggez::graphics::Color::WHITE,
+                )?;
+                vision_circles_mesh.line(
+                    &[glam::Vec2::from(monster_hitbox.center()), cone_0_endpoint_r],
+                    1.,
+                    ggez::graphics::Color::WHITE,
+                )?;
+                vision_circles_mesh.line(
+                    &[glam::Vec2::from(monster_hitbox.center()), cone_1_endpoint_r],
+                    1.,
+                    ggez::graphics::Color::WHITE,
+                )?;
+            }
+
+            let builded_hitbox_mesh = hitbox_mesh.build(ctx)?;
+
+            let builded_vision_mesh = vision_circles_mesh.build(ctx)?;
+
             ggez::graphics::draw(
                 ctx,
                 &builded_hitbox_mesh,
@@ -317,8 +343,13 @@ impl TestBot {
     }
     pub fn take_damages(&mut self, damage: i32) {
         self.hp -= damage;
+    }
+    pub fn is_dead(&self) -> bool {
         if self.hp < 1 {
             println!("TestBot with id: {id} should be dead", id = self.id);
+            true
+        } else {
+            false
         }
     }
 

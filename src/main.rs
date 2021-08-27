@@ -10,9 +10,11 @@ mod menu;
 mod monster;
 mod physics;
 mod player;
+mod weapon;
 
 const GAMEPAD_DEAD_ZONE: f32 = 0.5;
 const GAMEPAD_SPEED: f32 = 400.;
+const DEFAULT_WINDOW_SIZE: (f32, f32) = (1920., 1080.);
 
 struct Game {
     map: map::Map,
@@ -36,12 +38,23 @@ impl Game {
         map.gen_new_map(ctx, id_manager)?;
 
         // Create the player
-        let player_spawn_pos = glam::Vec2::new(tile_size * map.spawn.x, tile_size * map.spawn.y);
+        let player_spawn_pos = glam::Vec2::new(
+            tile_size * map.spawn.x + tile_size / 2. - 30. / 2.,
+            tile_size * map.spawn.y + tile_size / 2. - 30. / 2.,
+        );
         let player =
-            player::Player::new(player_spawn_pos.x, player_spawn_pos.y, 25., 25., id_manager);
+            player::Player::new(player_spawn_pos.x, player_spawn_pos.y, 30., 30., id_manager);
 
         // Create the camera
-        let camera = camera::Camera::new(32., 18.);
+        let mut camera = camera::Camera::new(32., 18.);
+
+        let focus = player.hitbox.center();
+        let window_size = camera.set_focus(
+            (focus.x, focus.y),
+            (DEFAULT_WINDOW_SIZE.0, DEFAULT_WINDOW_SIZE.1),
+            (map.total_rows, map.total_cols),
+            tile_size,
+        );
 
         // Create the monsters
         let mut monster_manager = monster::MonsterManager::new();
@@ -96,7 +109,12 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
             }
 
             // Update player
-            self.player.update_movements(&mut self.map.bloc_list, dt);
+            self.player.update_movements(
+                &mut self.map.bloc_list,
+                dt,
+                self.id_manager,
+                &mut self.monster_manager,
+            );
             self.player.update_los(
                 self.camera.scroll,
                 &mut self.map.bloc_list,
@@ -157,8 +175,16 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
         let font = ggez::graphics::Font::new(ctx, "/LiberationMono-Regular.ttf")?;
         let level_display = ggez::graphics::Text::new((level_str, font, 32.0));
         let hp_display = ggez::graphics::Text::new((hp_str, font, 32.0));
-        ggez::graphics::draw(ctx, &level_display, (level_dest, 0.0, ggez::graphics::Color::WHITE))?;
-        ggez::graphics::draw(ctx, &hp_display, (hp_dest, 0.0, ggez::graphics::Color::WHITE))?;
+        ggez::graphics::draw(
+            ctx,
+            &level_display,
+            (level_dest, 0.0, ggez::graphics::Color::WHITE),
+        )?;
+        ggez::graphics::draw(
+            ctx,
+            &hp_display,
+            (hp_dest, 0.0, ggez::graphics::Color::WHITE),
+        )?;
 
         ggez::graphics::present(ctx)?;
         Ok(())
@@ -220,7 +246,7 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
     ) {
         if keycode == self.keymap.up {
             self.player.inputs.up = false;
-        } else if keycode ==  self.keymap.down {
+        } else if keycode == self.keymap.down {
             self.player.inputs.down = false;
         } else if keycode == self.keymap.left {
             self.player.inputs.left = false;
@@ -237,8 +263,8 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
     ) {
         self.menu.egui_backend.input.mouse_button_down_event(button);
         match button {
-            ggez::input::mouse::MouseButton::Left => {}
-            ggez::input::mouse::MouseButton::Right => {}
+            ggez::input::mouse::MouseButton::Left => self.player.inputs.mouse_left = true,
+            ggez::input::mouse::MouseButton::Right => self.player.inputs.mouse_right = true,
             _ => (),
         }
     }
@@ -252,8 +278,8 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
     ) {
         self.menu.egui_backend.input.mouse_button_up_event(button);
         match button {
-            ggez::input::mouse::MouseButton::Left => {}
-            ggez::input::mouse::MouseButton::Right => {}
+            ggez::input::mouse::MouseButton::Left => self.player.inputs.mouse_left = false,
+            ggez::input::mouse::MouseButton::Right => self.player.inputs.mouse_right = false,
             _ => (),
         }
     }
@@ -367,7 +393,7 @@ fn main() -> ggez::GameResult {
         )
         .window_mode(
             ggez::conf::WindowMode::default()
-                .dimensions(1920., 1080.)
+                .dimensions(DEFAULT_WINDOW_SIZE.0, DEFAULT_WINDOW_SIZE.1)
                 .fullscreen_type(ggez::conf::FullscreenType::Desktop)
                 .resizable(true),
         );
