@@ -170,9 +170,17 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
         let level_dest = glam::Vec2::new(10.0, 10.0);
         let hp_dest = glam::Vec2::new(200.0, 10.0);
 
+        // r = min(255, 255 - (255 * ((self.hp - (self.MaxHP - self.hp)) / self.MaxHP)))
+        // g = min(255, 255 * (self.hp / (self.MaxHP / 2)))
+        // color = (r, g, 0)
+
         let level_str = format!("Level: {}", self.map.difficulty);
         let hp_str = format!("HP: {}", self.player.hp);
-        let font = ggez::graphics::Font::new(ctx, "/LiberationMono-Regular.ttf")?;
+        let font = ggez::graphics::Font::new(
+            ctx,
+            "/LiberationMono-Regular.ttf",
+            ggez::graphics::Color::RED,
+        )?;
         let level_display = ggez::graphics::Text::new((level_str, font, 32.0));
         let hp_display = ggez::graphics::Text::new((hp_str, font, 32.0));
         ggez::graphics::draw(
