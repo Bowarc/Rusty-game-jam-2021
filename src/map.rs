@@ -63,10 +63,10 @@ impl Map {
 
         let tile_translate: HashMap<i32, String> = vec![
             (-1, "ground".to_string()),
-            (4, "ground3".to_string()),
-            (9, "water2".to_string()),
+            (4, "wall".to_string()),
+            (9, "water".to_string()),
             (12, "crate".to_string()),
-            (18, "lava6".to_string()),
+            (18, "lava".to_string()),
             (21, "end".to_string()),
             (20, "spawn".to_string()),
         ]
