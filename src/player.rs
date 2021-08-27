@@ -67,7 +67,7 @@ impl Player {
         delta_pos.y += dir.y * (self.speed * dt);
         self.hitbox = physics::CheckCollision::world_collision(self.hitbox, delta_pos, bloclist);
 
-        if self.inputs.mouse_left {
+        if self.inputs.mouse_left || self.inputs.controler_south {
             self.shoot(id_manager, monster_manager, ctx);
         }
     }

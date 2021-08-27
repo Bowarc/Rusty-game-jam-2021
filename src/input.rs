@@ -13,6 +13,23 @@ pub struct Input {
     pub gamepad: bool,
     pub mouse_left: bool,
     pub mouse_right: bool,
+    pub controler_south: bool,
+    pub controler_east: bool,
+    pub controler_west: bool,
+    pub controler_north: bool,
+    pub controler_right_trigger_1: bool,
+    pub controler_left_trigger_1: bool,
+    pub controler_right_trigger_2: bool,
+    pub controler_left_trigger_2: bool,
+    pub controler_start: bool,
+    pub controler_select: bool,
+    pub controler_mode: bool,
+    pub controler_dpad_right: bool,
+    pub controler_dpad_up: bool,
+    pub controler_dpad_left: bool,
+    pub controler_dpad_down: bool,
+    pub controler_left_thumb: bool,
+    pub controler_right_thumb: bool,
 }
 
 pub struct KeyMap {
