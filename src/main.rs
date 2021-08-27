@@ -176,11 +176,7 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
 
         let level_str = format!("Level: {}", self.map.difficulty);
         let hp_str = format!("HP: {}", self.player.hp);
-        let font = ggez::graphics::Font::new(
-            ctx,
-            "/LiberationMono-Regular.ttf",
-            ggez::graphics::Color::RED,
-        )?;
+        let font = ggez::graphics::Font::new(ctx, "/LiberationMono-Regular.ttf")?;
         let level_display = ggez::graphics::Text::new((level_str, font, 32.0));
         let hp_display = ggez::graphics::Text::new((hp_str, font, 32.0));
         ggez::graphics::draw(
