@@ -49,7 +49,7 @@ impl Game {
         let mut camera = camera::Camera::new(32., 18.);
 
         let focus = player.hitbox.center();
-        let window_size = camera.set_focus(
+        camera.set_focus(
             (focus.x, focus.y),
             (DEFAULT_WINDOW_SIZE.0, DEFAULT_WINDOW_SIZE.1),
             (map.total_rows, map.total_cols),
@@ -135,15 +135,12 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
                     self.map.tile_size,
                 ),
             );
-            // self.map.bloc_effects(&self.monster_manager.monster_list);
             for index in 0..self.monster_manager.monster_list.len() {
                 self.map
                     .bloc_effects(&mut self.monster_manager.monster_list[index])
             }
 
             // Update the camera
-
-            //     physics::EntityTrait::get_hitbox(&self.monster_manager.monster_list[0]).center();
             let focus = self.player.hitbox.center();
             self.camera.set_focus(
                 (focus.x, focus.y),
@@ -156,7 +153,6 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
         Ok(())
     }
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult {
-        // ggez::graphics::clear(ctx, ggez::graphics::Color::from_rgba(100, 100, 100, 255));
         ggez::graphics::clear(ctx, ggez::graphics::Color::BLACK);
         let draw_offset = glam::Vec2::new(-self.camera.scroll.x, -self.camera.scroll.y);
         self.map.draw(ctx, draw_offset)?;
@@ -174,9 +170,6 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
         let hp_str = format!("HP: {}", self.player.hp);
         let font = ggez::graphics::Font::new(ctx, "/LiberationMono-Regular.ttf")?;
 
-        // r = min(255, 255 - (255 * ((self.hp - (self.MaxHP - self.hp)) / self.MaxHP)))
-        // g = min(255, 255 * (self.hp / (self.MaxHP / 2)))
-        // color = (r, g, 0)
         let player_hp_color = ggez::graphics::Color::from_rgb(
             std::cmp::min(
                 255,

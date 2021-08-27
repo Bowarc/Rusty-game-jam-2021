@@ -59,9 +59,6 @@ impl Map {
 
         let start_time = SystemTime::now();
 
-        let map_name = format!("Stage: {}", self.difficulty);
-        println!("Loading map: {}", map_name);
-
         self.ghost_tiles = vec![-1., 9., 10., 18., 19., 20., 21.];
 
         let tile_translate: HashMap<i32, String> = vec![
@@ -179,8 +176,8 @@ impl Map {
         match start_time.elapsed() {
             Ok(elapsed) => {
                 println!(
-                    "Map: `{}` has been loaded in {} ms.",
-                    map_name,
+                    "Loaded stage '{}' loaded in {} ms.",
+                    self.difficulty,
                     elapsed.as_millis()
                 );
             }
@@ -262,7 +259,7 @@ impl Map {
             }
         }
         self.bloc_list = bloclist;
-        println!("Bloc list size: {}", self.bloc_list.len());
+        // println!("Bloc list size: {}", self.bloc_list.len());
     }
     pub fn bloc_effects<E: physics::EntityTrait>(&mut self, entity: &mut E) {
         for bloc_index in 0..self.bloc_list.len() {
@@ -278,9 +275,7 @@ impl Map {
                     }
                     bloc::Bloc::Lava(l) => {
                         l.damage(entity);
-                        // println!("Player should take damage (map.rs)")
                     }
-
                     _ => {}
                 }
             }
@@ -315,10 +310,6 @@ impl Map {
                 bloc::Bloc::Spawn(s) => &s.tile,
                 bloc::Bloc::End(e) => &e.tile,
             };
-
-            // if tile.material == -1 {
-            //     continue;
-            // }
 
             let point = glam::Vec2::new(0.5, 0.5);
             let tile_drawparams = ggez::graphics::DrawParam::new()
@@ -372,7 +363,7 @@ impl Map {
             let rotated_tile_hitbox = tile.get_rotated_hitbox();
             hitbox_mesh.polyline(
                 ggez::graphics::DrawMode::stroke(1.),
-                &rotated_tile_hitbox, //&rotated_tile_hitbox.to_vec(),
+                &rotated_tile_hitbox,
                 color,
             )?;
         }
@@ -398,7 +389,6 @@ impl Tile {
         }
     }
     pub fn get_rotated_hitbox(&self) -> Vec<glam::Vec2> {
-        //physics::RotatedHitbox
         physics::rotate_square(self.hitbox, self.angle)
     }
 }

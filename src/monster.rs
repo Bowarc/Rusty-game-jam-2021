@@ -355,7 +355,6 @@ impl TestBot {
 
     pub fn update(&mut self, player_pos: glam::Vec2) {
         self.los.angle += 0.006; // make it rotate
-                                 // println!("angle: {}", self.los.angle);
         if self.los.angle as f64 > std::f64::consts::PI {
             self.los.angle = -std::f64::consts::PI as f32;
         }
@@ -364,23 +363,14 @@ impl TestBot {
             self.los.angle =
                 physics::two_points_angle(glam::Vec2::from(self.hitbox.center()), player_pos);
         }
-        // let test_angle =
-        // physics::two_points_angle(glam::Vec2::from(self.hitbox.center()), player_pos);
-        // println!("Angle: {}", test_angle);
         self.brain
             .update(glam::Vec2::from(self.hitbox.center()), self.los.angle);
         self.brain
             .can_see(glam::Vec2::from(self.hitbox.center()), player_pos);
     }
     pub fn update_movements(&mut self, dt: f32, bloc_list: &Vec<bloc::Bloc>) {
-        // let speed = TEST_BOT_SPEED * dt;
-        // self.update_movements2(bloc_list, speed);
         if !self.brain.wandering_path.is_empty() {
-            // println!("my pos: {:?}", self.hitbox.center());
-
             let desired_position = self.brain.wandering_path[0];
-            // println!("my goal: {:?}", desired_position);
-            // println!("");
 
             let my_pos = self.hitbox.center();
 
@@ -426,62 +416,6 @@ impl TestBot {
             }
         };
     }
-
-    // pub fn update_movements2(&mut self, bloc_list: &Vec<bloc::Bloc>, bot_speed: f32) {
-    //     if !self.brain.wandering_path.is_empty() {
-    //         let wanted_pos = self.brain.wandering_path[0];
-
-    //         let pos = (
-    //             self.hitbox.x + self.hitbox.w / 2.,
-    //             self.hitbox.y + self.hitbox.h / 2.,
-    //         );
-
-    //         let move_dir = glam::Vec2::new(wanted_pos.x - pos.0, wanted_pos.y - pos.1);
-
-    //         let mut bot_wanted_pos = self.hitbox.clone();
-    //         let mut bot_dir_vec = move_dir;
-
-    //         bot_dir_vec = physics::normalize_point(bot_dir_vec);
-    //         let mut speed = bot_speed;
-    //         let distance_to_wanted_pos = physics::RayCasting::get_distance(
-    //             glam::Vec2::new(pos.0, pos.1),
-    //             glam::Vec2::new(wanted_pos.x, wanted_pos.y),
-    //         );
-    //         // println!("{}", distance_to_wanted_pos);
-
-    //         if distance_to_wanted_pos < bot_speed {
-    //             speed = distance_to_wanted_pos;
-    //         }
-    //         bot_wanted_pos.x += bot_dir_vec.x * speed;
-    //         bot_wanted_pos.y += bot_dir_vec.y * speed;
-
-    //         let new_hitbox = physics::CheckCollision::world_collision(
-    //             self.hitbox,
-    //             (bot_wanted_pos.x, bot_wanted_pos.y),
-    //             bloc_list,
-    //         );
-    //         if self.hitbox == new_hitbox && !self.path.is_empty() {
-    //             println!("Door stuck");
-    //             self.path = vec![]
-    //         } else {
-    //             self.hitbox = new_hitbox;
-    //         }
-    //     }
-
-    //     if !self.path.is_empty() {
-    //         let d = physics::LOS::get_distance(
-    //             na::Point2::new(
-    //                 self.hitbox.x + self.hitbox.w / 2.,
-    //                 self.hitbox.y + self.hitbox.h / 2.,
-    //             ),
-    //             na::Point2::new(self.path[0].0, self.path[0].1),
-    //         );
-
-    //         if d < 1. {
-    //             self.path.remove(0);
-    //         }
-    //     }
-    // }
 }
 
 impl physics::EntityTrait for Monster {

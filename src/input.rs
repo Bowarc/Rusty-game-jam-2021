@@ -1,5 +1,5 @@
 use crate::physics::Pos2D;
-use egui::Key;
+
 use ggez::event::KeyCode;
 
 #[derive(Default)]

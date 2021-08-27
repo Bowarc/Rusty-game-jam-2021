@@ -58,7 +58,6 @@ impl Player {
         if self.inputs.mouse_left {
             self.shoot(id_manager, monster_manager);
         }
-        // println!("x: {}, y: {}", self.hitbox.x, self.hitbox.y);
     }
     pub fn update_los(
         &mut self,
@@ -99,7 +98,6 @@ impl Player {
             }
             physics::RayCastResult::Fail => {
                 self.los.end_point = line_of_sight.1;
-                // println!("Player's ray cast failled");
             }
         }
         self.los.result = result;
@@ -162,51 +160,36 @@ impl Player {
         id_manager: id::IdManager,
         monster_manager: &mut monster::MonsterManager,
     ) -> weapon::ObjectDrop {
-        println!("Shot! ");
         let mut dropped_item = weapon::ObjectDrop::None;
 
-        let a = match self.los.result.clone() {
-            physics::RayCastResult::Ok(line, object, _dist) => {
-                match object {
-                    physics::RayCastBlocType::Bloc(bloc_index) => {
-                        // match &mut bloc_list[bloc_index]{
-                        //     _ => {
-                        //         // Damage the bloc or something idc
-                        //     }
-                        // }
-                    }
-                    physics::RayCastBlocType::Monster(monster_index) => {
-                        if self.inventory.index_is_weapon() {
-                            println!("Great shot! ");
-                            match self.inventory.weapon_list[self.inventory.selected_index] {
-                                weapon::Weapon::Pistol(mut p) => {
-                                    if p.can_shoot() {
-                                        dropped_item = monster_manager.damage_monster_isdead(
-                                            monster_index,
-                                            p.damage,
-                                            id_manager,
-                                        );
-                                    }
-                                }
-                                _ => {
-                                    println!("You have no weapon !")
+        match self.los.result.clone() {
+            physics::RayCastResult::Ok(_line, object, _dist) => match object {
+                physics::RayCastBlocType::Bloc(_bloc_index) => {}
+                physics::RayCastBlocType::Monster(monster_index) => {
+                    if self.inventory.index_is_weapon() {
+                        match self.inventory.weapon_list[self.inventory.selected_index] {
+                            weapon::Weapon::Pistol(mut p) => {
+                                if p.can_shoot() {
+                                    dropped_item = monster_manager.damage_monster_isdead(
+                                        monster_index,
+                                        p.damage,
+                                        id_manager,
+                                    );
                                 }
                             }
-                        } else {
-                            println!("This");
+                            _ => {
+                                println!("You have no weapon !")
+                            }
                         }
-                    }
-                    _ => {
-                        println!("You missed")
+                    } else {
+                        println!("The selected weapon can't shoot");
                     }
                 }
-            }
-            physics::RayCastResult::Fail => {
-                println!("Failed")
-            }
+                _ => {}
+            },
+            physics::RayCastResult::Fail => {}
         };
         dropped_item
-        // weapon::ObjectDrop::None
     }
 }
 
@@ -227,9 +210,6 @@ impl physics::EntityTrait for Player {
         self.id
     }
     fn take_damage(&mut self, damage: i32) {
-        // match self {
-        //     Player(p) => p.take_damage(damage),
-        // }
         self.take_damages(damage);
     }
 }

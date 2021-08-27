@@ -1,6 +1,5 @@
 use ggez;
 use glam;
-// #[derive(Clone, Copy)]
 
 pub struct Camera {
     pub camera: ggez::graphics::Rect,

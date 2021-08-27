@@ -309,13 +309,13 @@ impl CheckCollision {
                         // Collided up
                         next_pos.y = tile.hitbox.y + tile.hitbox.h;
                     } else {
+                        // Collided down
                         next_pos.y = tile.hitbox.y - entity_hitbox.h;
                     }
                 }
             }
         }
         next_pos
-        // ggez::graphics::Rect::new(delta_pos.x, delta_pos.y, entity_hitbox.w, entity_hitbox.h)
     }
 }
 
@@ -371,8 +371,6 @@ impl RayCasting {
             (rect[3].x, rect[3].y, rect[0].x, rect[0].y), // botleft, topleft
         ]; // not 100% sure but i think lmao
 
-        // let (mut pX, mut pY) = (0.0, 0.0);
-
         for r in rect_lines.iter() {
             let (rx1, ry1, rx2, ry2) = r.clone();
             let new_r = (glam::Vec2::new(r.0, r.1), glam::Vec2::new(r.2, r.3));
@@ -413,7 +411,6 @@ impl RayCasting {
                         if dist_1 > dist_2 {
                             los_endpoint = pt.clone();
                             r_item_index = Some(index.clone());
-                            let hitted_id = entity.id();
                         }
                     }
                 }
@@ -713,22 +710,6 @@ impl PathFinding {
         }
     }
 }
-
-// impl RotatedHitbox {
-//     pub fn new(r: ggez::graphics::Rect, angle: f32) -> Self {
-//         // rotate_square(r, angle)
-//         RotatedHitbox {
-//             p1: glam::Vec2::new(0., 0.),
-//             p2: glam::Vec2::new(0., 0.),
-//             p3: glam::Vec2::new(0., 0.),
-//             p4: glam::Vec2::new(0., 0.),
-//         }
-//     }
-
-//     pub fn to_vec(&self) -> Vec<glam::Vec2> {
-//         vec![self.p1, self.p2, self.p3, self.p4]
-//     }
-// }
 
 impl PathFindingNode {
     fn new(id: i32, transparent: bool, position: (i32, i32), g_cost: i32, h_cost: i32) -> Self {

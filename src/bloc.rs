@@ -1,17 +1,6 @@
 use crate::{map, physics};
 use std;
 
-///             TRANSLATE FOR MAP CREATION
-///             -1 => Air bloc (ground)
-///             4 => Wall
-///             10 => Water
-///             12 => Crate  (object stash or something like that)
-///             18 => Lava
-///             19 => Heal pack
-///             20 => Spawn point
-///             21 => Level (depth) end point
-
-// #[derive(Debug)]
 pub enum Bloc {
     Air(Air),
     Wall(Wall),

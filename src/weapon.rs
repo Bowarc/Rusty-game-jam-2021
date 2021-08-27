@@ -30,7 +30,7 @@ pub struct Pistol {
     pub range: f32,
 }
 
-pub fn generate_drop(mut id_manager: id::IdManager) -> ObjectDrop {
+pub fn generate_drop(id_manager: id::IdManager) -> ObjectDrop {
     let prcentage = rand::thread_rng().gen_range(0..100);
 
     let unique_weapon = 1; // the number of weapons
@@ -51,7 +51,7 @@ pub fn generate_drop(mut id_manager: id::IdManager) -> ObjectDrop {
 }
 
 impl WeaponInventory {
-    pub fn new(mut id_manager: id::IdManager) -> Self {
+    pub fn new(id_manager: id::IdManager) -> Self {
         let mut weapon_list = [Weapon::None; INVENTORY_MAX_LENGHT];
         weapon_list[0] = Weapon::Pistol(Pistol::new(id_manager));
         WeaponInventory {
