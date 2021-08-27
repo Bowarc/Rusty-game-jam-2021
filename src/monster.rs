@@ -125,7 +125,7 @@ impl MonsterManager {
         match &mut self.monster_list[monster_index] {
             Monster::TestBot(tb) => {
                 tb.take_damages(damage);
-                println!("Bot with id: {} has been damaged", tb.id);
+                // println!("Bot with id: {} has been damaged", tb.id);
                 if tb.is_dead() {
                     monster_is_dead = true;
                 };
@@ -347,7 +347,7 @@ impl TestBot {
     }
     pub fn is_dead(&self) -> bool {
         if self.hp < 1 {
-            println!("TestBot with id: {id} should be dead", id = self.id);
+            // println!("TestBot with id: {id} should be dead", id = self.id);
             true
         } else {
             false

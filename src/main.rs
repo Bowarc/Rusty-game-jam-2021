@@ -179,12 +179,15 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
         }
 
         // Draw the GUI
+        let font = ggez::graphics::Font::new(ctx, "/LiberationMono-Regular.ttf")?;
+
         let level_dest = glam::Vec2::new(10.0, 10.0);
         let hp_dest = glam::Vec2::new(200.0, 10.0);
+        let fps_dest = glam::Vec2::new(10.0, 50.0);
 
         let level_str = format!("Level: {}", self.map.difficulty);
         let hp_str = format!("HP: {}", self.player.hp);
-        let font = ggez::graphics::Font::new(ctx, "/LiberationMono-Regular.ttf")?;
+        let fps_str = format!("Fps: {:.2}", ggez::timer::fps(ctx));
 
         let player_hp_color = ggez::graphics::Color::from_rgb(
             std::cmp::min(
@@ -198,6 +201,7 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
         let hp_text_fragment = ggez::graphics::TextFragment::new(hp_str).color(player_hp_color);
         let level_display = ggez::graphics::Text::new((level_str, font, 32.0));
         let hp_display = ggez::graphics::Text::new((hp_text_fragment, font, 32.0));
+        let fps_display = ggez::graphics::Text::new((fps_str, font, 32.0));
         ggez::graphics::draw(
             ctx,
             &level_display,
@@ -207,6 +211,11 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
             ctx,
             &hp_display,
             (hp_dest, 0.0, ggez::graphics::Color::WHITE),
+        )?;
+        ggez::graphics::draw(
+            ctx,
+            &fps_display,
+            (fps_dest, 0.0, ggez::graphics::Color::WHITE),
         )?;
 
         ggez::graphics::present(ctx)?;
@@ -334,9 +343,13 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
             ggez::event::Button::Select => self.player.inputs.controler_select = true,
             ggez::event::Button::Start => self.player.inputs.controler_start = true,
             ggez::event::Button::Mode => self.player.inputs.controler_mode = true,
-            ggez::event::Button::RightTrigger => self.player.inputs.controler_right_trigger_1 = true,
+            ggez::event::Button::RightTrigger => {
+                self.player.inputs.controler_right_trigger_1 = true
+            }
             ggez::event::Button::LeftTrigger => self.player.inputs.controler_left_trigger_1 = true,
-            ggez::event::Button::RightTrigger2 => self.player.inputs.controler_right_trigger_2 = true,
+            ggez::event::Button::RightTrigger2 => {
+                self.player.inputs.controler_right_trigger_2 = true
+            }
             ggez::event::Button::LeftTrigger2 => self.player.inputs.controler_left_trigger_2 = true,
             ggez::event::Button::DPadRight => self.player.inputs.controler_dpad_right = true,
             ggez::event::Button::DPadUp => self.player.inputs.controler_dpad_up = true,
@@ -362,10 +375,16 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
             ggez::event::Button::Select => self.player.inputs.controler_select = false,
             ggez::event::Button::Start => self.player.inputs.controler_start = false,
             ggez::event::Button::Mode => self.player.inputs.controler_mode = false,
-            ggez::event::Button::RightTrigger => self.player.inputs.controler_right_trigger_1 = false,
+            ggez::event::Button::RightTrigger => {
+                self.player.inputs.controler_right_trigger_1 = false
+            }
             ggez::event::Button::LeftTrigger => self.player.inputs.controler_left_trigger_1 = false,
-            ggez::event::Button::RightTrigger2 => self.player.inputs.controler_right_trigger_2 = false,
-            ggez::event::Button::LeftTrigger2 => self.player.inputs.controler_left_trigger_2 = false,
+            ggez::event::Button::RightTrigger2 => {
+                self.player.inputs.controler_right_trigger_2 = false
+            }
+            ggez::event::Button::LeftTrigger2 => {
+                self.player.inputs.controler_left_trigger_2 = false
+            }
             ggez::event::Button::DPadRight => self.player.inputs.controler_dpad_right = false,
             ggez::event::Button::DPadUp => self.player.inputs.controler_dpad_up = false,
             ggez::event::Button::DPadLeft => self.player.inputs.controler_dpad_left = false,

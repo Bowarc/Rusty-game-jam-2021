@@ -86,7 +86,9 @@ impl Player {
             glam::Vec2::from(hitbox_center),
             glam::Vec2::from(self.inputs.pointing),
         );
-        let weapon_range = 500.;
+        let weapon_range = weapon::WeaponTrait::get_range(
+            &self.inventory.weapon_list[self.inventory.selected_index],
+        );
 
         let player_center = glam::Vec2::new(self.hitbox.center().x, self.hitbox.center().y);
 
@@ -186,27 +188,24 @@ impl Player {
     ) -> weapon::ObjectDrop {
         let mut dropped_item = weapon::ObjectDrop::None;
 
-        if self.inventory.index_is_weapon() {
-            match &mut self.inventory.weapon_list[self.inventory.selected_index] {
-                weapon::Weapon::Pistol(p) => {
-                    if p.can_shoot() {
-                        self.shot_sound.play(ctx).unwrap();
-                        match self.los.result.clone() {
-                            physics::RayCastResult::Ok(_line, object, _dist) => match object {
-                                physics::RayCastBlocType::Monster(monster_index) => {
-                                    dropped_item = monster_manager.damage_monster_isdead(
-                                        monster_index,
-                                        p.damage,
-                                        id_manager,
-                                    );
-                                }
-                                _ => {}
-                            },
-                            physics::RayCastResult::Fail => {}
-                        }
+        if weapon::WeaponTrait::can_shoot(
+            &mut self.inventory.weapon_list[self.inventory.selected_index],
+        ) {
+            self.shot_sound.play(ctx).unwrap();
+            match self.los.result.clone() {
+                physics::RayCastResult::Ok(_line, object, _dist) => match object {
+                    physics::RayCastBlocType::Monster(monster_index) => {
+                        dropped_item = monster_manager.damage_monster_isdead(
+                            monster_index,
+                            weapon::WeaponTrait::get_damage(
+                                &self.inventory.weapon_list[self.inventory.selected_index],
+                            ),
+                            id_manager,
+                        );
                     }
-                }
-                _ => {}
+                    _ => {}
+                },
+                physics::RayCastResult::Fail => {}
             }
         }
 
