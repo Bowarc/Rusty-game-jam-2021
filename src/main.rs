@@ -29,21 +29,27 @@ struct Game {
 
 impl Game {
     fn new(ctx: &mut ggez::Context) -> ggez::GameResult<Self> {
-        let id_manager = id::IdManager::new();
+        let mut id_manager = id::IdManager::new();
         // set the tile size
         let tile_size = 60.;
 
         // load the map
-        let mut map = map::Map::new(tile_size);
-        map.gen_new_map(ctx, id_manager)?;
+        let mut map = map::Map::new(tile_size, ctx);
+        map.gen_new_map(ctx, &mut id_manager)?;
 
         // Create the player
         let player_spawn_pos = glam::Vec2::new(
             tile_size * map.spawn.x + tile_size / 2. - 30. / 2.,
             tile_size * map.spawn.y + tile_size / 2. - 30. / 2.,
         );
-        let player =
-            player::Player::new(player_spawn_pos.x, player_spawn_pos.y, 30., 30., id_manager);
+        let player = player::Player::new(
+            player_spawn_pos.x,
+            player_spawn_pos.y,
+            30.,
+            30.,
+            &mut id_manager,
+            ctx,
+        );
 
         // Create the camera
         let mut camera = camera::Camera::new(32., 18.);
@@ -61,10 +67,18 @@ impl Game {
         monster_manager.new_bot(
             500.,
             700.,
-            25.,
-            25.,
+            50.,
+            50.,
             monster::MonsterType::TestBot,
-            id_manager,
+            &mut id_manager,
+        );
+        monster_manager.new_bot(
+            600.,
+            700.,
+            50.,
+            50.,
+            monster::MonsterType::TestBot,
+            &mut id_manager,
         );
 
         // Create main menu
@@ -112,8 +126,9 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
             self.player.update_movements(
                 &mut self.map.bloc_list,
                 dt,
-                self.id_manager,
+                &mut self.id_manager,
                 &mut self.monster_manager,
+                ctx,
             );
             self.player.update_los(
                 self.camera.scroll,
@@ -226,7 +241,7 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
             );
             if distance_from_end < self.map.tile_size {
                 self.map.difficulty += 1;
-                self.map.gen_new_map(ctx, self.id_manager).unwrap();
+                self.map.gen_new_map(ctx, &mut self.id_manager).unwrap();
                 self.player.hitbox.x = self.map.spawn.x * self.map.tile_size;
                 self.player.hitbox.y = self.map.spawn.y * self.map.tile_size;
             }
@@ -395,7 +410,7 @@ fn main() -> ggez::GameResult {
         .window_setup(
             ggez::conf::WindowSetup::default()
                 .title("The game title")
-                .vsync(true),
+                .vsync(false),
         )
         .window_mode(
             ggez::conf::WindowMode::default()

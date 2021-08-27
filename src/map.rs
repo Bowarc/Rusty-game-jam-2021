@@ -1,4 +1,5 @@
 use ggez;
+use ggez::audio::SoundSource;
 use glam::Vec2;
 use noise::{
     utils::{NoiseMapBuilder, PlaneMapBuilder},
@@ -23,6 +24,7 @@ pub struct Map {
     pub difficulty: u32,
     pub spawn: Vec2,
     pub end: Vec2,
+    pub new_level_sound: ggez::audio::Source,
 }
 
 pub struct Tile {
@@ -32,7 +34,7 @@ pub struct Tile {
     pub angle: f32,
 }
 impl Map {
-    pub fn new(tile_size: f32) -> Self {
+    pub fn new(tile_size: f32, ctx: &mut ggez::Context) -> Self {
         Map {
             map_title: String::new(),
             tile_size: tile_size,
@@ -46,18 +48,20 @@ impl Map {
             difficulty: 0,
             spawn: Vec2::new(0., 0.),
             end: Vec2::new(0., 0.),
+            new_level_sound: ggez::audio::Source::new(ctx, "/sounds/spawn.wav").unwrap(),
         }
     }
 
     pub fn gen_new_map(
         &mut self,
         ctx: &mut ggez::Context,
-        id_manager: id::IdManager,
+        id_manager: &mut id::IdManager,
     ) -> ggez::GameResult {
         const MAP_WIDTH: usize = 100;
         const MAP_HEIGHT: usize = 100;
 
         let start_time = SystemTime::now();
+        self.new_level_sound.play(ctx);
 
         self.ghost_tiles = vec![-1., 9., 10., 18., 19., 20., 21.];
 
@@ -188,7 +192,7 @@ impl Map {
         Ok(())
     }
 
-    pub fn crate_tilemap(&mut self, mut id_manager: id::IdManager) {
+    pub fn crate_tilemap(&mut self, id_manager: &mut id::IdManager) {
         let mut bloclist: Vec<bloc::Bloc> = Vec::new();
 
         for (y, row) in self.map_file_content.iter().enumerate() {

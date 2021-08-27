@@ -46,7 +46,7 @@ impl MonsterManager {
         w: f32,
         h: f32,
         monster_type: MonsterType,
-        mut id_manager: id::IdManager,
+        id_manager: &mut id::IdManager,
     ) {
         let brain = Brain::new();
         let new_monster = match monster_type {
@@ -116,7 +116,7 @@ impl MonsterManager {
         &mut self,
         monster_index: usize,
         damage: i32,
-        id_manager: id::IdManager,
+        id_manager: &mut id::IdManager,
     ) -> weapon::ObjectDrop {
         let mut monster_is_dead = false;
 
@@ -132,9 +132,11 @@ impl MonsterManager {
                 drop = weapon::generate_drop(id_manager);
             }
         }
+
         if monster_is_dead {
             self.monster_list.swap_remove(monster_index);
         }
+
         drop
     }
 
@@ -320,7 +322,6 @@ impl Brain {
             // println!("WHEEERREE AAARRREE YOUUUUU");
             self.see_something = false
         }
-
         result
     }
 }
@@ -368,6 +369,7 @@ impl TestBot {
         self.brain
             .can_see(glam::Vec2::from(self.hitbox.center()), player_pos);
     }
+
     pub fn update_movements(&mut self, dt: f32, bloc_list: &Vec<bloc::Bloc>) {
         if !self.brain.wandering_path.is_empty() {
             let desired_position = self.brain.wandering_path[0];

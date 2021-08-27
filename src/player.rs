@@ -1,4 +1,5 @@
 use ggez;
+use ggez::audio::SoundSource;
 
 use crate::{bloc, id, input, monster, physics, weapon};
 
@@ -14,10 +15,19 @@ pub struct Player {
     pub speed: f32,
     pub los: physics::LOS,
     pub inventory: weapon::WeaponInventory,
+    pub shot_sound: ggez::audio::Source,
 }
 
 impl Player {
-    pub fn new(x: f32, y: f32, w: f32, h: f32, mut id_manager: id::IdManager) -> Self {
+    pub fn new(
+        x: f32,
+        y: f32,
+        w: f32,
+        h: f32,
+        id_manager: &mut id::IdManager,
+        ctx: &mut ggez::Context,
+    ) -> Self {
+        let shot_sound = ggez::audio::Source::new(ctx, "/sounds/pistol.wav").unwrap();
         Player {
             id: id_manager.get_new_id(),
             hp: PLAYER_BASE_HP,
@@ -27,14 +37,16 @@ impl Player {
             speed: PLAYER_SPEED,
             los: physics::LOS::default(),
             inventory: weapon::WeaponInventory::new(id_manager),
+            shot_sound,
         }
     }
     pub fn update_movements(
         &mut self,
         bloclist: &mut Vec<bloc::Bloc>,
         dt: f32,
-        id_manager: id::IdManager,
+        id_manager: &mut id::IdManager,
         monster_manager: &mut monster::MonsterManager,
+        ctx: &mut ggez::Context,
     ) {
         let mut dir = glam::Vec2::ZERO;
         let mut delta_pos = glam::Vec2::ZERO;
@@ -56,7 +68,7 @@ impl Player {
         self.hitbox = physics::CheckCollision::world_collision(self.hitbox, delta_pos, bloclist);
 
         if self.inputs.mouse_left {
-            self.shoot(id_manager, monster_manager);
+            self.shoot(id_manager, monster_manager, ctx);
         }
     }
     pub fn update_los(
@@ -77,6 +89,7 @@ impl Player {
         let weapon_range = 500.;
 
         let player_center = glam::Vec2::new(self.hitbox.center().x, self.hitbox.center().y);
+
         let rotated_line_end_point: glam::Vec2 = physics::rotate_line(
             player_center,
             glam::Vec2::new(
@@ -107,25 +120,20 @@ impl Player {
             glam::Vec2::new(self.hitbox.center().x, self.hitbox.center().y) + draw_offset;
 
         // Used to see the orientation, code from from Heto's game
-        let mut gunmesh = ggez::graphics::MeshBuilder::new();
+        let mut hitbox_mesh = ggez::graphics::MeshBuilder::new();
+        let mut los_mesh = ggez::graphics::MeshBuilder::new();
 
         let gun_rect =
             ggez::graphics::Rect::new(self.hitbox.w / 2.0 - 10., self.hitbox.h / 2.0, 30.0, 10.0);
 
-        gunmesh.rectangle(
+        hitbox_mesh.rectangle(
             ggez::graphics::DrawMode::stroke(1.0),
             gun_rect,
             ggez::graphics::Color::WHITE,
         )?;
-        let builded_gunmesh = gunmesh.build(ctx)?;
-        ggez::graphics::draw(
-            ctx,
-            &builded_gunmesh,
-            (player_center, self.los.angle, ggez::graphics::Color::WHITE),
-        )?;
+
         // End of debug code
 
-        let mut hitbox_mesh = ggez::graphics::MeshBuilder::new();
         hitbox_mesh.rectangle(
             ggez::graphics::DrawMode::stroke(1.0),
             ggez::graphics::Rect::new(
@@ -136,13 +144,28 @@ impl Player {
             ),
             ggez::graphics::Color::RED,
         )?;
-        let builded_hitbox_mesh = hitbox_mesh.build(ctx)?;
+        los_mesh.circle(
+            ggez::graphics::DrawMode::stroke(10.),
+            self.los.end_point,
+            5.,
+            0.1,
+            ggez::graphics::Color::from_rgb(0, 100, 100),
+        )?;
 
+        let builded_hitbox_mesh = hitbox_mesh.build(ctx)?;
         ggez::graphics::draw(
             ctx,
             &builded_hitbox_mesh,
             (player_center, self.los.angle, ggez::graphics::Color::WHITE),
         )?;
+
+        let builded_los_mesh = los_mesh.build(ctx)?;
+        ggez::graphics::draw(
+            ctx,
+            &builded_los_mesh,
+            (draw_offset, 0., ggez::graphics::Color::WHITE),
+        )?;
+
         Ok(())
     }
     pub fn take_damages(&mut self, damage: i32) -> bool {
@@ -157,8 +180,9 @@ impl Player {
     }
     pub fn shoot(
         &mut self,
-        id_manager: id::IdManager,
+        id_manager: &mut id::IdManager,
         monster_manager: &mut monster::MonsterManager,
+        ctx: &mut ggez::Context,
     ) -> weapon::ObjectDrop {
         let mut dropped_item = weapon::ObjectDrop::None;
 
@@ -167,15 +191,18 @@ impl Player {
                 physics::RayCastBlocType::Bloc(_bloc_index) => {}
                 physics::RayCastBlocType::Monster(monster_index) => {
                     if self.inventory.index_is_weapon() {
-                        match self.inventory.weapon_list[self.inventory.selected_index] {
-                            weapon::Weapon::Pistol(mut p) => {
+                        match &mut self.inventory.weapon_list[self.inventory.selected_index] {
+                            weapon::Weapon::Pistol(p) => {
                                 if p.can_shoot() {
+                                    self.shot_sound.play(ctx);
                                     dropped_item = monster_manager.damage_monster_isdead(
                                         monster_index,
                                         p.damage,
                                         id_manager,
                                     );
                                 }
+                                // self.inventory.weapon_list[self.inventory.selected_index] =
+                                // weapon::Weapon::Pistol(p);
                             }
                             _ => {
                                 println!("You have no weapon !")

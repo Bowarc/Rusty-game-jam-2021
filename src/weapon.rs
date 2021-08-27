@@ -30,7 +30,7 @@ pub struct Pistol {
     pub range: f32,
 }
 
-pub fn generate_drop(id_manager: id::IdManager) -> ObjectDrop {
+pub fn generate_drop(id_manager: &mut id::IdManager) -> ObjectDrop {
     let prcentage = rand::thread_rng().gen_range(0..100);
 
     let unique_weapon = 1; // the number of weapons
@@ -51,7 +51,7 @@ pub fn generate_drop(id_manager: id::IdManager) -> ObjectDrop {
 }
 
 impl WeaponInventory {
-    pub fn new(id_manager: id::IdManager) -> Self {
+    pub fn new(id_manager: &mut id::IdManager) -> Self {
         let mut weapon_list = [Weapon::None; INVENTORY_MAX_LENGHT];
         weapon_list[0] = Weapon::Pistol(Pistol::new(id_manager));
         WeaponInventory {
@@ -68,11 +68,11 @@ impl WeaponInventory {
 }
 
 impl Pistol {
-    pub fn new(mut id_manager: id::IdManager) -> Self {
+    pub fn new(id_manager: &mut id::IdManager) -> Self {
         Pistol {
             id: id_manager.get_new_id(),
-            damage: 10,
-            attack_speed: 333,
+            damage: 6,
+            attack_speed: 200,
             last_shot_time: std::time::SystemTime::UNIX_EPOCH,
             range: 1000.,
         }
@@ -82,14 +82,15 @@ impl Pistol {
             Ok(elapsed) => {
                 if elapsed.as_millis() > self.attack_speed as u128 {
                     self.last_shot_time = std::time::SystemTime::now();
+                    // println!("elapsed: {}", elapsed.as_millis());
                     true
                 } else {
-                    println!("Not a weapon");
+                    // println!("Can't shoot yet");
                     false
                 }
             }
             Err(e) => {
-                println!(
+                eprintln!(
                     "There has been an error with the system clock, err: {:?}",
                     e
                 );
