@@ -41,17 +41,35 @@ impl MonsterManager {
     }
     pub fn new_bot(
         &mut self,
-        x: f32,
-        y: f32,
-        w: f32,
-        h: f32,
         monster_type: MonsterType,
         id_manager: &mut id::IdManager,
+        map_infos: (Vec<Vec<i32>>, Vec<f32>, f32),
     ) {
         let brain = Brain::new();
+        let mut pos = glam::Vec2::ZERO;
+        loop {
+            // This looks ok
+            let random_pos = glam::Vec2::new(
+                rand::thread_rng().gen_range(0. ..map_infos.0[0].len() as f32 - 1.) * map_infos.2,
+                rand::thread_rng().gen_range(0. ..map_infos.0.len() as f32 - 1.) * map_infos.2,
+            );
+
+            let shifted_entity_position =
+                glam::Vec2::new(random_pos.x / map_infos.2, random_pos.y / map_infos.2);
+
+            if map_infos.1.contains(
+                &(map_infos.0[shifted_entity_position.x as usize]
+                    [shifted_entity_position.y as usize] as f32),
+            ) {
+                // pos is ok
+                pos = random_pos;
+
+                break;
+            }
+        }
         let new_monster = match monster_type {
             MonsterType::TestBot => {
-                Monster::TestBot(TestBot::new(x, y, w, h, id_manager.get_new_id(), brain))
+                Monster::TestBot(TestBot::new(pos.x, pos.y, id_manager.get_new_id(), brain))
             }
         };
 
@@ -70,6 +88,7 @@ impl MonsterManager {
         dt: f32,
         bloc_list: &Vec<bloc::Bloc>,
         map_infos: (Vec<Vec<i32>>, Vec<f32>, f32),
+        map_size: (f32, f32),
     ) {
         let mut pathfinding_count = 0;
         let pathfinding_threshold = 3;
@@ -80,21 +99,15 @@ impl MonsterManager {
                     if tb.brain.wandering_path.is_empty()
                         && pathfinding_count < pathfinding_threshold
                     {
-                        println!("Creating path for bot id: {}", tb.id);
                         pathfinding_count += 1;
-                        // let raw_map = map
 
-                        let random_desired_pos = glam::Vec2::new(
-                            rand::thread_rng().gen_range(
-                                1. * map_infos.2..(map_infos.0[0].len() as f32 - 1.) * map_infos.2,
-                            ),
-                            rand::thread_rng().gen_range(
-                                1. * map_infos.2..(map_infos.0.len() as f32 - 1.) * map_infos.2,
-                            ),
-                        );
+                        todo!("bruh pls do it");
+
+                        let nonsense = glam::Vec2::ZERO;
+
                         let path_result = physics::PathFinding::astar(
                             glam::Vec2::from(tb.hitbox.center()),
-                            random_desired_pos,
+                            nonsense,
                             map_infos.clone(),
                         );
                         match path_result {
@@ -102,7 +115,7 @@ impl MonsterManager {
                                 tb.brain.wandering_path = path;
                             }
                             physics::PathFindingResult::Fail => {
-                                println!("Failed pathfinding for bot id: {}", tb.id);
+                                // println!("Failed pathfinding for bot id: {}", tb.id);
                             }
                         }
                     }
@@ -156,7 +169,7 @@ impl MonsterManager {
                     physics::EntityTrait::get_angle(&self.monster_list[i]),
                 );
 
-                let (close_circle, large_circle, vision_cone, iq, see_something) =
+                let (close_circle, large_circle, vision_cone, iq, see_something, hp, angle) =
                     match &self.monster_list[i] {
                         Monster::TestBot(tb) => (
                             tb.brain.close_vision_circle,
@@ -164,6 +177,8 @@ impl MonsterManager {
                             tb.brain.vision_cone,
                             tb.brain.iq,
                             tb.brain.see_something,
+                            tb.hp,
+                            tb.los.angle,
                         ),
                     };
 
@@ -221,6 +236,33 @@ impl MonsterManager {
                     1.,
                     ggez::graphics::Color::WHITE,
                 )?;
+
+                let hp_background_rect = ggez::graphics::Rect::new(
+                    monster_hitbox.x,
+                    monster_hitbox.y - monster_hitbox.h / 3.,
+                    monster_hitbox.w,
+                    monster_hitbox.h / 3.,
+                );
+                hitbox_mesh.rectangle(
+                    ggez::graphics::DrawMode::fill(),
+                    hp_background_rect,
+                    ggez::graphics::Color::BLACK,
+                )?;
+
+                let hp_color = ggez::graphics::Color::from_rgb(
+                    std::cmp::min(255, (255 - (255 * ((hp - (100 - hp)) / 100))) as u8),
+                    std::cmp::min(255, (255 * (hp / (100 / 2))) as u8),
+                    0,
+                );
+                let hp_width = (monster_hitbox.w * hp as f32 / 100.) as i32;
+
+                let hp_rect = ggez::graphics::Rect::new(
+                    monster_hitbox.x,
+                    monster_hitbox.y - monster_hitbox.h / 3.,
+                    hp_width as f32,
+                    monster_hitbox.h / 3.,
+                );
+                hitbox_mesh.rectangle(ggez::graphics::DrawMode::fill(), hp_rect, hp_color)?;
             }
 
             let builded_hitbox_mesh = hitbox_mesh.build(ctx)?;
@@ -327,8 +369,8 @@ impl Brain {
 }
 
 impl TestBot {
-    pub fn new(x: f32, y: f32, w: f32, h: f32, id: i32, mut brain: Brain) -> Self {
-        let hitbox = ggez::graphics::Rect::new(x, y, w, h);
+    pub fn new(x: f32, y: f32, id: i32, mut brain: Brain) -> Self {
+        let hitbox = ggez::graphics::Rect::new(x, y, 50., 50.);
         let los = physics::LOS::default();
         brain.update(glam::Vec2::from(hitbox.center()), los.angle);
         println!("iq: {}", brain.iq);
@@ -402,7 +444,7 @@ impl TestBot {
             );
 
             if self.hitbox == new_hitbox {
-                println!("DOOOOR STUCK, id: {}", self.id);
+                // println!("DOOOOR STUCK, id: {}", self.id);
                 self.brain.wandering_path = Vec::new();
             } else {
                 self.hitbox = new_hitbox;

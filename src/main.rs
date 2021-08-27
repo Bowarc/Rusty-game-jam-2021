@@ -65,22 +65,18 @@ impl Game {
 
         // Create the monsters
         let mut monster_manager = monster::MonsterManager::new();
-        monster_manager.new_bot(
-            500.,
-            700.,
-            50.,
-            50.,
-            monster::MonsterType::TestBot,
-            &mut id_manager,
-        );
-        monster_manager.new_bot(
-            600.,
-            700.,
-            50.,
-            50.,
-            monster::MonsterType::TestBot,
-            &mut id_manager,
-        );
+
+        for _ in 0..1 {
+            monster_manager.new_bot(
+                monster::MonsterType::TestBot,
+                &mut id_manager,
+                (
+                    map.map_file_content.clone(),
+                    map.ghost_tiles.clone(),
+                    map.tile_size,
+                ),
+            );
+        }
 
         // Create main menu
         let main_menu = menu::Gui::new();
@@ -140,6 +136,17 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
             self.map.bloc_effects(&mut self.player);
 
             // Update the monsters
+            // while self.monster_manager.monster_list.len() < 30 {
+            //     self.monster_manager.new_bot(
+            //         monster::MonsterType::TestBot,
+            //         &mut self.id_manager,
+            //         (
+            //             self.map.map_file_content.clone(),
+            //             self.map.ghost_tiles.clone(),
+            //             self.map.tile_size,
+            //         ),
+            //     );
+            // }
             self.monster_manager
                 .update(glam::Vec2::from(self.player.hitbox.center()));
             self.monster_manager.update_movements(
@@ -150,6 +157,7 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
                     self.map.ghost_tiles.clone(),
                     self.map.tile_size,
                 ),
+                (self.map.total_rows, self.map.total_cols),
             );
             for index in 0..self.monster_manager.monster_list.len() {
                 self.map
@@ -157,6 +165,8 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
             }
 
             // Update the camera
+            // let focus =
+            // physics::EntityTrait::get_hitbox(&self.monster_manager.monster_list[0]).center();
             let focus = self.player.hitbox.center();
             self.camera.set_focus(
                 (focus.x, focus.y),

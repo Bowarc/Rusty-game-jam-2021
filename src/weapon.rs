@@ -25,6 +25,7 @@ pub struct WeaponInventory {
 pub enum Weapon {
     Pistol(Pistol),
     Knife(Knife),
+    Minigun(Minigun),
     None,
 }
 
@@ -39,6 +40,14 @@ pub struct Pistol {
 
 #[derive(Clone, Copy)]
 pub struct Knife {
+    pub id: i32,
+    pub damage: i32,
+    pub attack_speed: i32, // delay between two shots
+    pub last_shot_time: std::time::SystemTime,
+    pub range: f32,
+}
+#[derive(Clone, Copy)]
+pub struct Minigun {
     pub id: i32,
     pub damage: i32,
     pub attack_speed: i32, // delay between two shots
@@ -70,8 +79,8 @@ pub fn generate_drop(id_manager: &mut id::IdManager) -> ObjectDrop {
 impl WeaponInventory {
     pub fn new(id_manager: &mut id::IdManager) -> Self {
         let mut weapon_list = [Weapon::None; INVENTORY_MAX_LENGHT];
-        // weapon_list[0] = Weapon::Pistol(Pistol::new(id_manager));
-        weapon_list[0] = Weapon::Knife(Knife::new(id_manager));
+        weapon_list[0] = Weapon::Minigun(Minigun::new(id_manager));
+        // weapon_list[0] = Weapon::Knife(Knife::new(id_manager));
         WeaponInventory {
             weapon_list: weapon_list,
             selected_index: 0,
@@ -104,6 +113,17 @@ impl Knife {
             attack_speed: 120,
             last_shot_time: std::time::SystemTime::UNIX_EPOCH,
             range: 80.,
+        }
+    }
+}
+impl Minigun {
+    pub fn new(id_manager: &mut id::IdManager) -> Self {
+        Minigun {
+            id: id_manager.get_new_id(),
+            damage: 30,
+            attack_speed: 30,
+            last_shot_time: std::time::SystemTime::UNIX_EPOCH,
+            range: 700.,
         }
     }
 }
@@ -153,6 +173,27 @@ impl WeaponTrait for Weapon {
                     }
                 }
             }
+            Weapon::Minigun(mg) => {
+                match mg.last_shot_time.elapsed() {
+                    Ok(elapsed) => {
+                        if elapsed.as_millis() > mg.attack_speed as u128 {
+                            mg.last_shot_time = std::time::SystemTime::now();
+                            // println!("elapsed: {}", elapsed.as_millis());
+                            true
+                        } else {
+                            // println!("Can't shoot yet");
+                            false
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!(
+                            "There has been an error with the system clock, err: {:?}",
+                            e
+                        );
+                        false
+                    }
+                }
+            }
             _ => false,
         }
     }
@@ -160,13 +201,14 @@ impl WeaponTrait for Weapon {
         match self {
             Weapon::Pistol(p) => p.damage,
             Weapon::Knife(k) => k.damage,
+            Weapon::Minigun(mg) => mg.damage,
             _ => 0,
         }
     }
     fn get_range(&self) -> f32 {
         match self {
             Weapon::Pistol(p) => p.range,
-            Weapon::Knife(k) => k.range,
+            Weapon::Minigun(mg) => mg.range,
             _ => 0.,
         }
     }
