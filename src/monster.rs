@@ -401,7 +401,7 @@ impl TestBot {
         let hitbox = ggez::graphics::Rect::new(x, y, 50., 50.);
         let los = physics::LOS::default();
         brain.update(glam::Vec2::from(hitbox.center()), los.angle);
-        println!("iq: {}", brain.iq);
+        // println!("iq: {}", brain.iq);
         TestBot {
             id: id,
             hp: 100,
