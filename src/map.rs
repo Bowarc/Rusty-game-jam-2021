@@ -147,11 +147,13 @@ impl Map {
                 rng.gen_range(MAP_WIDTH / 2..MAP_WIDTH - 1),
                 rng.gen_range(MAP_HEIGHT / 2..MAP_HEIGHT - 1),
             );
-            let start_pos = (
-                start.0 as f32 * self.tile_size,
-                start.1 as f32 * self.tile_size,
-            );
-            let end_pos = (end.0 as f32 * self.tile_size, end.1 as f32 * self.tile_size);
+            // let start_pos = (
+            //     start.0 as f32 * self.tile_size,
+            //     start.1 as f32 * self.tile_size,
+            // );
+            let start_pos = (start.0 as f32, start.1 as f32);
+            // let end_pos = (end.0 as f32 * self.tile_size, end.1 as f32 * self.tile_size);
+            let end_pos = (end.0 as f32, end.1 as f32);
             match physics::PathFinding::astar(
                 Vec2::from(start_pos),
                 Vec2::from(end_pos),

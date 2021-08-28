@@ -565,27 +565,24 @@ impl PathFinding {
         // Preparation
         let tile_size = map_infos.2;
 
-        let shifted_entity_position =
-            glam::Vec2::new(entity_position.x / tile_size, entity_position.y / tile_size);
+        // let shifted_entity_position =
+        //     glam::Vec2::new(entity_position.x / tile_size, entity_position.y / tile_size);
 
-        let shifted_desired_pos = glam::Vec2::new(
-            desired_position.x / tile_size,
-            desired_position.y / tile_size,
-        );
+        // let shifted_desired_pos = glam::Vec2::new(
+        //     desired_position.x / tile_size,
+        //     desired_position.y / tile_size,
+        // );
 
-        let mut grid = PathFinding::construct_pf_grid(
-            map_infos.clone(),
-            shifted_entity_position,
-            shifted_desired_pos,
-        );
+        let mut grid =
+            PathFinding::construct_pf_grid(map_infos.clone(), entity_position, desired_position);
 
         let grid_size = glam::Vec2::new((grid.len() as i32) as f32, grid[0].len() as f32);
 
         let start_node =
-            grid[shifted_entity_position.y as usize][shifted_entity_position.x as usize].clone();
+            grid[entity_position.y as usize - 1][entity_position.x as usize - 1].clone();
 
         let mut target_node =
-            grid[shifted_desired_pos.y as usize][shifted_desired_pos.x as usize].clone();
+            grid[desired_position.y as usize][desired_position.x as usize].clone();
 
         let mut found = false;
 
@@ -641,7 +638,7 @@ impl PathFinding {
                 }
             }
         } else {
-            println!("wanted pos is a wall")
+            // println!("wanted pos is a wall")
         }
         if found {
             let mut backtrack: Vec<glam::Vec2> = Vec::new();

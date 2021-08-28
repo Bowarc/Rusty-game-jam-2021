@@ -136,17 +136,17 @@ impl ggez::event::EventHandler<ggez::GameError> for Game {
             self.map.bloc_effects(&mut self.player);
 
             // Update the monsters
-            // while self.monster_manager.monster_list.len() < 30 {
-            //     self.monster_manager.new_bot(
-            //         monster::MonsterType::TestBot,
-            //         &mut self.id_manager,
-            //         (
-            //             self.map.map_file_content.clone(),
-            //             self.map.ghost_tiles.clone(),
-            //             self.map.tile_size,
-            //         ),
-            //     );
-            // }
+            while self.monster_manager.monster_list.len() < 30 {
+                self.monster_manager.new_bot(
+                    monster::MonsterType::TestBot,
+                    &mut self.id_manager,
+                    (
+                        self.map.map_file_content.clone(),
+                        self.map.ghost_tiles.clone(),
+                        self.map.tile_size,
+                    ),
+                );
+            }
             self.monster_manager
                 .update(glam::Vec2::from(self.player.hitbox.center()));
             self.monster_manager.update_movements(

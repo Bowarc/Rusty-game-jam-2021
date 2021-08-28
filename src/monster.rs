@@ -101,13 +101,41 @@ impl MonsterManager {
                     {
                         pathfinding_count += 1;
 
-                        todo!("bruh pls do it");
+                        let index_mosnter_pos = (
+                            tb.hitbox.center().x / map_infos.2,
+                            tb.hitbox.center().y / map_infos.2,
+                        );
 
-                        let nonsense = glam::Vec2::ZERO;
+                        let mut wanted_pos = glam::Vec2::ZERO;
+                        loop {
+                            // This looks ok
+                            let random_pos = glam::Vec2::new(
+                                rand::thread_rng().gen_range(0. ..map_infos.0[0].len() as f32 - 1.)
+                                    * map_infos.2,
+                                rand::thread_rng().gen_range(0. ..map_infos.0.len() as f32 - 1.)
+                                    * map_infos.2,
+                            );
+
+                            let shifted_entity_position = glam::Vec2::new(
+                                random_pos.x / map_infos.2,
+                                random_pos.y / map_infos.2,
+                            );
+
+                            if map_infos.1.contains(
+                                &(map_infos.0[shifted_entity_position.x as usize]
+                                    [shifted_entity_position.y as usize]
+                                    as f32),
+                            ) {
+                                // pos is ok
+                                wanted_pos = shifted_entity_position;
+
+                                break;
+                            }
+                        }
 
                         let path_result = physics::PathFinding::astar(
-                            glam::Vec2::from(tb.hitbox.center()),
-                            nonsense,
+                            glam::Vec2::from(index_mosnter_pos),
+                            wanted_pos,
                             map_infos.clone(),
                         );
                         match path_result {
