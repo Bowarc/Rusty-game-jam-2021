@@ -1,7 +1,7 @@
 # Rusty game jam 2021
 ## Illusion of security
 
-Hello, this is the repo of the team Eragon, Renko, Bowarc for the rusty jam of 2021.
+Hello, this is the repo of the team Eragon, Bowarc for the rusty jam of 2021.
 
 
 HOW TO USE:  
